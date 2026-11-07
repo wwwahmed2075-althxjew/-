@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'data/azkar_data.dart';
+import 'data/surah_names.dart';
 
 void main() {
   runApp(const AwwabApp());
@@ -37,6 +40,39 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int selectedTab = 0;
   int tasbeehCount = 0;
+  String azkarCategory = awwabAzkar.keys.first;
+  final Map<String, int> azkarProgress = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      tasbeehCount = prefs.getInt('tasbeeh_count') ?? 0;
+      for (final category in awwabAzkar.keys) {
+        final items = awwabAzkar[category]!;
+        for (var i = 0; i < items.length; i++) {
+          final key = '$category-$i';
+          azkarProgress[key] = prefs.getInt('azkar_$key') ?? 0;
+        }
+      }
+    });
+  }
+
+  Future<void> _saveTasbeeh() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('tasbeeh_count', tasbeehCount);
+  }
+
+  Future<void> _saveAzkar(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('azkar_$key', value);
+  }
 
   static const tabs = ['الرئيسية', 'القرآن', 'الأذكار', 'السبحة', 'الإعدادات'];
 
@@ -44,8 +80,8 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final pages = [
       _homePage(),
-      _simplePage('القرآن الكريم', 'قريبًا: المصحف والبحث والعلامات والورد'),
-      _simplePage('الأذكار', 'قريبًا: أذكار الصباح والمساء والأذكار اليومية'),
+      _quranPage(),
+      _azkarPage(),
       _tasbeehPage(),
       _simplePage('الإعدادات', 'اللغة والمظهر وحجم الخط والتنبيهات'),
     ];
@@ -193,6 +229,97 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
+
+  Widget _quranPage() {
+    return ListView(
+      key: const ValueKey('quran'),
+      padding: const EdgeInsets.all(18),
+      children: [
+        const Text('القرآن الكريم', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        const Text('فهرس سور القرآن الكريم', style: TextStyle(color: Colors.white54)),
+        const SizedBox(height: 14),
+        ...List.generate(awwabSurahNames.length, (index) => Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(.05), borderRadius: BorderRadius.circular(14)),
+          child: ListTile(
+            dense: true,
+            leading: CircleAvatar(radius: 15, child: Text((index + 1).toString(), style: const TextStyle(fontSize: 11))),
+            title: Text(awwabSurahNames[index]),
+            trailing: const Icon(Icons.chevron_left_rounded, color: Colors.white54),
+            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('تم اختيار سورة ' + awwabSurahNames[index])),
+            ),
+          ),
+        )),
+      ],
+    );
+  }
+
+  Widget _azkarPage() {
+    final items = awwabAzkar[azkarCategory]!;
+    return ListView(
+      key: const ValueKey('azkar'),
+      padding: const EdgeInsets.all(18),
+      children: [
+        const Text('الأذكار', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 7,
+          children: awwabAzkar.keys.map((category) => ChoiceChip(
+            label: Text(category),
+            selected: category == azkarCategory,
+            onSelected: (_) => setState(() => azkarCategory = category),
+            selectedColor: Colors.white,
+            backgroundColor: const Color(0xFF222222),
+            labelStyle: TextStyle(color: category == azkarCategory ? Colors.black : Colors.white, fontSize: 12),
+          )).toList(),
+        ),
+        const SizedBox(height: 14),
+        ...List.generate(items.length, (index) {
+          final item = items[index];
+          final key = '$azkarCategory-$index';
+          final target = item['count'] as int;
+          final current = azkarProgress[key] ?? 0;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(.055),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withOpacity(.12)),
+            ),
+            child: Column(
+              children: [
+                Text(item['text'] as String, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, height: 1.8)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text('$current / $target', style: const TextStyle(color: Colors.white70)),
+                    const Spacer(),
+                    IconButton.filled(
+                      onPressed: current >= target ? null : () {
+                        final next = current + 1;
+                        setState(() => azkarProgress[key] = next);
+                        _saveAzkar(key, next);
+                      },
+                      icon: const Icon(Icons.add),
+                      style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
+                    ),
+                    IconButton(
+                      onPressed: () { setState(() => azkarProgress[key] = 0); _saveAzkar(key, 0); },
+                      icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   Widget _tasbeehPage() {
     return Center(
       key: const ValueKey('tasbeeh'),
@@ -206,7 +333,7 @@ class _HomeShellState extends State<HomeShell> {
             const Text('سُبْحَانَ اللَّهِ', style: TextStyle(color: Colors.white60)),
             const SizedBox(height: 34),
             GestureDetector(
-              onTap: () => setState(() => tasbeehCount++),
+              onTap: () { setState(() => tasbeehCount++); _saveTasbeeh(); },
               child: Container(
                 width: 210,
                 height: 210,
@@ -228,7 +355,7 @@ class _HomeShellState extends State<HomeShell> {
             const Text('اضغط على الدائرة للتسبيح', style: TextStyle(color: Colors.white54, fontSize: 12)),
             const SizedBox(height: 24),
             OutlinedButton.icon(
-              onPressed: () => setState(() => tasbeehCount = 0),
+              onPressed: () { setState(() => tasbeehCount = 0); _saveTasbeeh(); },
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('تصفير العداد'),
               style: OutlinedButton.styleFrom(
