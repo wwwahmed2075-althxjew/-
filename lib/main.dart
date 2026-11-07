@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/azkar_data.dart';
 import 'data/surah_names.dart';
@@ -233,25 +235,33 @@ class _HomeShellState extends State<HomeShell> {
   Widget _quranPage() {
     return ListView(
       key: const ValueKey('quran'),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 24),
       children: [
         const Text('القرآن الكريم', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        const Text('فهرس سور القرآن الكريم', style: TextStyle(color: Colors.white54)),
-        const SizedBox(height: 14),
-        ...List.generate(awwabSurahNames.length, (index) => Container(
-          margin: const EdgeInsets.only(bottom: 6),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(.05), borderRadius: BorderRadius.circular(14)),
-          child: ListTile(
-            dense: true,
-            leading: CircleAvatar(radius: 15, child: Text((index + 1).toString(), style: const TextStyle(fontSize: 11))),
-            title: Text(awwabSurahNames[index]),
-            trailing: const Icon(Icons.chevron_left_rounded, color: Colors.white54),
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('تم اختيار سورة ' + awwabSurahNames[index])),
+        const SizedBox(height: 6),
+        const Text('اختر سورة لفتح المصحف وقراءة الآيات', style: TextStyle(color: Colors.white54, fontSize: 13)),
+        const SizedBox(height: 18),
+        ...List.generate(awwabSurahNames.length, (index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 7),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(.045), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withOpacity(.08))),
+            child: ListTile(
+              dense: true,
+              leading: CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.white.withOpacity(.10),
+                child: Text((index + 1).toString(), style: const TextStyle(color: Colors.white, fontSize: 11)),
+              ),
+              title: Text(awwabSurahNames[index], style: const TextStyle(fontWeight: FontWeight.w600)),
+              trailing: const Icon(Icons.chevron_left_rounded, color: Colors.white38, size: 20),
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => QuranReaderPage(surahNumber: index + 1, surahName: awwabSurahNames[index]),
+                ));
+              },
             ),
-          ),
-        )),
+          );
+        }),
       ],
     );
   }
@@ -432,6 +442,116 @@ class _HomeShellState extends State<HomeShell> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+class QuranReaderPage extends StatefulWidget {
+  final int surahNumber;
+  final String surahName;
+  const QuranReaderPage({super.key, required this.surahNumber, required this.surahName});
+  @override
+  State<QuranReaderPage> createState() => _QuranReaderPageState();
+}
+
+class _QuranReaderPageState extends State<QuranReaderPage> {
+  late Future<List<dynamic>> ayahsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    ayahsFuture = _loadAyahs();
+  }
+
+  Future<List<dynamic>> _loadAyahs() async {
+    final url = Uri.parse('https://api.alquran.cloud/v1/surah/' + widget.surahNumber.toString() + '/quran-uthmani');
+    final response = await http.get(url).timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) throw Exception('تعذر تحميل السورة. حاول مرة أخرى.');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded['code'] != 200 || decoded['data'] == null) throw Exception('لم يصل نص السورة بشكل صحيح.');
+    return decoded['data']['ayahs'] as List<dynamic>;
+  }
+
+  void _retry() {
+    setState(() { ayahsFuture = _loadAyahs(); });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: Text(widget.surahName), centerTitle: true),
+        body: FutureBuilder<List<dynamic>>(
+          future: ayahsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: Colors.white));
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(26),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 38),
+                      const SizedBox(height: 14),
+                      const Text('لم نتمكن من تحميل السورة', style: TextStyle(color: Colors.white, fontSize: 18)),
+                      const SizedBox(height: 8),
+                      const Text('تأكد من اتصال الإنترنت ثم حاول مرة أخرى.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54, height: 1.6)),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(onPressed: _retry, icon: const Icon(Icons.refresh_rounded), label: const Text('إعادة المحاولة')),
+                    ],
+                  ),
+                ),
+              );
+            }
+            final ayahs = snapshot.data ?? [];
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(.05), borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white.withOpacity(.12))),
+                  child: Column(
+                    children: [
+                      Text('سُورَةُ ' + widget.surahName, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      Text(ayahs.length.toString() + ' آية', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...ayahs.map((ayah) {
+                  final verseText = ayah['text'] as String? ?? '';
+                  final number = ayah['numberInSurah'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    child: Column(
+                      children: [
+                        Text(verseText, textAlign: TextAlign.center, textDirection: TextDirection.rtl, style: const TextStyle(color: Colors.white, fontSize: 25, height: 2.0, fontWeight: FontWeight.w400)),
+                        const SizedBox(height: 9),
+                        Container(
+                          width: 30, height: 30, alignment: Alignment.center,
+                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(.22))),
+                          child: Text(number.toString(), style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                        ),
+                        const SizedBox(height: 12),
+                        Divider(color: Colors.white.withOpacity(.08)),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 12),
+                const Text('مصدر النص: AlQuran Cloud — يلزم الاتصال بالإنترنت.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 10)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
