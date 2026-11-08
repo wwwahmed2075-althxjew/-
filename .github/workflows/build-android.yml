@@ -67,6 +67,25 @@ jobs:
         run: flutter analyze lib --no-fatal-infos --no-fatal-warnings
       - name: Test offline Quran and prayer calculations
         run: flutter test
+      - name: Configure Gradle Maven mirrors
+        run: |
+          mkdir -p "$HOME/.gradle/init.d"
+          cat > "$HOME/.gradle/init.d/awwab-maven-mirrors.gradle" <<'GRADLE'
+          // Prefer independent Maven mirrors before Maven Central's redirecting endpoint.
+          allprojects {
+              repositories {
+                  maven { url "https://maven.aliyun.com/repository/central" }
+                  maven { url "https://repo.huaweicloud.com/repository/maven/" }
+              }
+          }
+          settingsEvaluated { settings ->
+              settings.pluginManagement.repositories {
+                  maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
+                  maven { url "https://maven.aliyun.com/repository/central" }
+                  maven { url "https://repo.huaweicloud.com/repository/maven/" }
+              }
+          }
+          GRADLE
       - name: Build APK
         run: |
           for attempt in 1 2 3; do
