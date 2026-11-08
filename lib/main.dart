@@ -2004,8 +2004,172 @@ class _PrayerCenterPageState extends State<PrayerCenterPage> {
               const SizedBox(height: 6),
               const Text('التنبيهات الحالية إشعارات قصيرة بصوت الإشعار الافتراضي للهاتف. تشغيل الأذان الكامل واختيار مؤذن مختلف لكل صلاة يحتاج إضافة ملفات صوتية مرخّصة واختبار تشغيلها في الخلفية، ولم أفعّله كميزة مكتملة بعد.', style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.6)),
             ])),
+            const SizedBox(height: 12),
+            awwabGlassCard(child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.mic_none_rounded, color: Colors.white70),
+              title: const Text('اختيار المؤذّن ومعاينة الأذان', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              subtitle: const Text('تخصيص مؤذّن لكل صلاة وضبط مستوى صوت المعاينة', style: TextStyle(color: Colors.white54, fontSize: 11)),
+              trailing: const Icon(Icons.chevron_left_rounded, color: Colors.white54),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AthanSettingsPage())),
+            )),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+class AthanSettingsPage extends StatefulWidget {
+  const AthanSettingsPage({super.key});
+  @override
+  State<AthanSettingsPage> createState() => _AthanSettingsPageState();
+}
+
+class _AthanSettingsPageState extends State<AthanSettingsPage> {
+  static const prayers = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
+  final AudioPlayer player = AudioPlayer();
+  List<Map<String, dynamic>> athans = [];
+  final Map<String, String> selectedByPrayer = {};
+  double volume = 0.8;
+  bool loading = true;
+  String? error;
+  String? previewingId;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final response = await http.get(Uri.parse('https://alfurqan.online/api/v1/athan/list')).timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200) throw Exception('API error');
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+      final raw = decoded['athans'] as List? ?? [];
+      final loaded = raw.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() {
+        athans = loaded;
+        volume = prefs.getDouble('athan_preview_volume') ?? 0.8;
+        for (final prayer in prayers) {
+          final saved = prefs.getString('athan_for_' + prayer);
+          if (saved != null && loaded.any((item) => item['id']?.toString() == saved)) {
+            selectedByPrayer[prayer] = saved;
+          } else if (loaded.isNotEmpty) {
+            selectedByPrayer[prayer] = loaded.first['id'].toString();
+          }
+        }
+        loading = false;
+      });
+      await player.setVolume(volume);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+        error = 'تعذر تحميل قائمة المؤذنين. تحقق من الإنترنت وحاول مجددًا.';
+      });
+    }
+  }
+
+  Future<void> _select(String prayer, String? id) async {
+    if (id == null) return;
+    setState(() => selectedByPrayer[prayer] = id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('athan_for_' + prayer, id);
+  }
+
+  Future<void> _preview(String prayer) async {
+    final id = selectedByPrayer[prayer];
+    if (id == null) return;
+    final item = athans.firstWhere((entry) => entry['id'].toString() == id);
+    final audioPath = item['audioUrl']?.toString() ?? '/api/v1/athan/' + id;
+    final url = audioPath.startsWith('http') ? audioPath : 'https://alfurqan.online' + audioPath;
+    try {
+      setState(() => previewingId = id);
+      await player.stop();
+      await player.setVolume(volume);
+      await player.setUrl(url);
+      unawaited(player.play());
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر تشغيل معاينة الأذان.')));
+    }
+  }
+
+  Future<void> _setVolume(double value) async {
+    setState(() => volume = value);
+    await player.setVolume(value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('athan_preview_volume', value);
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('المؤذّنون والأذان')),
+        body: loading
+            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            : error != null
+                ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(error!, style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 12),
+                    OutlinedButton(onPressed: () { setState(() { loading = true; error = null; }); _load(); }, child: const Text('إعادة المحاولة')),
+                  ]))
+                : ListView(padding: const EdgeInsets.all(18), children: [
+                    awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text('مستوى صوت المعاينة', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Slider(value: volume, min: 0, max: 1, divisions: 10, activeColor: Colors.white, onChanged: _setVolume),
+                      Text((volume * 100).round().toString() + '%', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    ])),
+                    const SizedBox(height: 12),
+                    ...prayers.map((prayer) {
+                      final selectedId = selectedByPrayer[prayer];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(prayer, style: const TextStyle(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            value: selectedId,
+                            isExpanded: true,
+                            dropdownColor: const Color(0xFF202020),
+                            decoration: InputDecoration(filled: true, fillColor: Colors.white.withOpacity(.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none)),
+                            items: athans.map((item) => DropdownMenuItem<String>(
+                              value: item['id'].toString(),
+                              child: Text((item['name']?.toString() ?? 'مؤذّن') + ' — ' + (item['location']?.toString() ?? '')),
+                            )).toList(),
+                            onChanged: (value) => _select(prayer, value),
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: OutlinedButton.icon(
+                              onPressed: selectedId == null ? null : () => _preview(prayer),
+                              icon: Icon(previewingId == selectedId ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded, size: 18),
+                              label: const Text('معاينة الأذان'),
+                              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: BorderSide(color: Colors.white.withOpacity(.2))),
+                            ),
+                          ),
+                        ])),
+                      );
+                    }),
+                    const SizedBox(height: 4),
+                    const Text('تم حفظ اختيار المؤذّن لكل صلاة ومستوى صوت المعاينة. هذه الصفحة تتيح المعاينة؛ تشغيل الأذان تلقائيًا في الخلفية عند دخول الوقت ما زال يحتاج خدمة إنذار وتشغيل خلفية واختبارًا على الهاتف.', style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.7)),
+                    const SizedBox(height: 8),
+                    const Text('مصدر ملفات الأذان: Al Furqan API، مع إظهار اسم المؤذّن ومكان التسجيل.', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                  ]),
       ),
     );
   }
