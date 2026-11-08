@@ -337,49 +337,33 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Widget _tasbeehPage() {
-    return Center(
+    const phrases = ['سُبْحَانَ اللَّهِ', 'الْحَمْدُ لِلَّهِ', 'لَا إِلَٰهَ إِلَّا اللَّهُ', 'اللَّهُ أَكْبَرُ', 'أَسْتَغْفِرُ اللَّهَ', 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّد'];
+    return GestureDetector(
       key: const ValueKey('tasbeeh'),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      behavior: HitTestBehavior.opaque,
+      onTap: () { setState(() => tasbeehCount++); _saveTasbeeh(); },
+      child: SizedBox.expand(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             const Text('السُّبْحَة', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 10),
-            const Text('سُبْحَانَ اللَّهِ', style: TextStyle(color: Colors.white60)),
-            const SizedBox(height: 34),
-            GestureDetector(
-              onTap: () { setState(() => tasbeehCount++); _saveTasbeeh(); },
-              child: Container(
-                width: 210,
-                height: 210,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(.055),
-                  border: Border.all(color: Colors.white.withOpacity(.25), width: 1.4),
-                  boxShadow: [
-                    BoxShadow(color: Colors.white.withOpacity(.04), blurRadius: 35, spreadRadius: 4),
-                  ],
-                ),
-                child: Center(
-                  child: Text('$tasbeehCount',
-                      style: const TextStyle(fontSize: 54, fontWeight: FontWeight.w300)),
-                ),
-              ),
+            const SizedBox(height: 12),
+            Text(phrases[tasbeehCount % phrases.length], textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 17)),
+            const SizedBox(height: 28),
+            Container(
+              width: 210, height: 210,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(.055), border: Border.all(color: Colors.white.withOpacity(.25), width: 1.4), boxShadow: [BoxShadow(color: Colors.white.withOpacity(.04), blurRadius: 35, spreadRadius: 4)]),
+              child: Center(child: Text('$tasbeehCount', style: const TextStyle(fontSize: 54, fontWeight: FontWeight.w300))),
             ),
-            const SizedBox(height: 24),
-            const Text('اضغط على الدائرة للتسبيح', style: TextStyle(color: Colors.white54, fontSize: 12)),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
+            const Text('المس أي مكان في الشاشة للتسبيح', style: TextStyle(color: Colors.white54, fontSize: 12)),
+            const SizedBox(height: 22),
             OutlinedButton.icon(
               onPressed: () { setState(() => tasbeehCount = 0); _saveTasbeeh(); },
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('تصفير العداد'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.white.withOpacity(.25)),
-              ),
+              icon: const Icon(Icons.refresh_rounded, size: 18), label: const Text('تصفير العداد'),
+              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: BorderSide(color: Colors.white.withOpacity(.25))),
             ),
-          ],
+          ]),
         ),
       ),
     );
