@@ -11,5 +11,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('السَّلَامُ عَلَيْكُمْ'), findsOneWidget);
     expect(find.text('الرئيسية'), findsOneWidget);
+    expect(find.text('اختصاراتك'), findsNothing);
+    expect(find.text('مواقيت الصلاة'), findsOneWidget);
+    expect(find.text('قيام الليل'), findsOneWidget);
   });
 }
