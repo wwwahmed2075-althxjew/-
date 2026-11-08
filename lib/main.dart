@@ -184,7 +184,7 @@ class _HomeShellState extends State<HomeShell> {
       const SizedBox(height: 5),
       Text(DateTime.now().hour < 12 ? 'صباح الخير' : 'مساء الخير', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
       const SizedBox(height: 18),
-      _glassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      awwabGlassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('وَاذْكُر رَّبَّكَ كَثِيرًا', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
         SizedBox(height: 7),
         Text('اجعل لسانك عامرًا بذكر الله', style: TextStyle(color: Colors.white60, fontSize: 13)),
@@ -209,7 +209,7 @@ class _HomeShellState extends State<HomeShell> {
         const SizedBox(height: 6),
         const Text('مصحف المدينة برواية حفص — يعمل دون إنترنت', style: TextStyle(color: Colors.white54, fontSize: 13)),
         const SizedBox(height: 14),
-        _glassCard(child: Row(children: [
+        awwabGlassCard(child: Row(children: [
           const Icon(Icons.menu_book_rounded, color: Colors.white70),
           const SizedBox(width: 10),
           const Expanded(child: Text('متابعة آخر قراءة', style: TextStyle(fontWeight: FontWeight.w600))),
@@ -219,7 +219,7 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ])),
         const SizedBox(height: 8),
-        _glassCard(child: Row(children: [
+        awwabGlassCard(child: Row(children: [
           const Icon(Icons.bookmarks_outlined, color: Colors.white70),
           const SizedBox(width: 10),
           const Expanded(child: Text('علاماتي المرجعية', style: TextStyle(fontWeight: FontWeight.w600))),
@@ -414,7 +414,7 @@ class _HomeShellState extends State<HomeShell> {
       const SizedBox(height: 10),
       _moreTile(Icons.text_fields_rounded, 'حجم الخط', 'اضبط حجم القراءة من نافذة جانبية', _showTextScaleDialog),
       const SizedBox(height: 12),
-      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('نوع الخط', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
@@ -439,19 +439,19 @@ class _HomeShellState extends State<HomeShell> {
         ),
       ])),
       const SizedBox(height: 12),
-      _glassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      awwabGlassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('المظهر', style: TextStyle(fontWeight: FontWeight.w600)),
         SizedBox(height: 8),
         Text('أسود زجاجي — الهوية المعتمدة بالأسود والأبيض', style: TextStyle(color: Colors.white60, fontSize: 12)),
       ])),
       const SizedBox(height: 12),
-      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('اللغة', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         const Text('الواجهة العربية هي اللغة الحالية. دعم الترجمة الكاملة للإنجليزية والفرنسية ما زال ضمن متطلبات الإصدار.', style: TextStyle(color: Colors.white60, fontSize: 12)),
       ])),
       const SizedBox(height: 12),
-      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('البيانات', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         const Text('عداد السبحة وتقدم الأذكار محفوظان على جهازك.', style: TextStyle(color: Colors.white60, fontSize: 12)),
@@ -500,7 +500,7 @@ class _HomeShellState extends State<HomeShell> {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: _glassCard(child: Row(children: [
+        child: awwabGlassCard(child: Row(children: [
           Icon(icon, color: Colors.white70, size: 23),
           const SizedBox(width: 13),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1087,7 +1087,7 @@ class _DailyWirdPageState extends State<DailyWirdPage> {
         backgroundColor: const Color(0xFF080808),
         appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('الورد القرآني اليومي')),
         body: ListView(padding: const EdgeInsets.all(18), children: [
-          _glassCard(child: Column(children: [
+          awwabGlassCard(child: Column(children: [
             const Text('هدفك اليومي من صفحات المصحف', style: TextStyle(color: Colors.white70, fontSize: 13)),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
@@ -1189,7 +1189,7 @@ class _WorshipTrackerPageState extends State<WorshipTrackerPage> {
         backgroundColor: const Color(0xFF080808),
         appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('متابعة العبادات')),
         body: ListView(padding: const EdgeInsets.all(18), children: [
-          _glassCard(child: Row(children: [
+          awwabGlassCard(child: Row(children: [
             const Expanded(child: Text('إنجاز اليوم', style: TextStyle(fontWeight: FontWeight.w700))),
             Text(count.toString() + ' / ' + items.length.toString(), style: const TextStyle(color: Colors.white70, fontFeatures: [ui.FontFeature.tabularFigures()])),
           ])),
