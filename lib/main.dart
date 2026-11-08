@@ -608,7 +608,7 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
   @override
   void initState() {
     super.initState();
-    currentPage = widget.initialPage.clamp(1, Quran.pageCount);
+    currentPage = widget.initialPage.clamp(1, Quran.pageCount).toInt();
     pageController = PageController(initialPage: currentPage - 1);
   }
 
