@@ -35,31 +35,71 @@ jobs:
           import re
           from pathlib import Path
 
-          candidates = [Path("android/app/build.gradle"), Path("android/app/build.gradle.kts")]
-          p = next((candidate for candidate in candidates if candidate.exists()), None)
+          groovy = Path("android/app/build.gradle")
+          kotlin = Path("android/app/build.gradle.kts")
+          p = groovy if groovy.exists() else kotlin if kotlin.exists() else None
           if p is None:
-              raise SystemExit("Flutter did not generate app/build.gradle or app/build.gradle.kts")
+              raise SystemExit("Flutter did not generate an Android app Gradle file")
           s = p.read_text()
           is_kotlin = p.suffix == ".kts"
           enabled = "isCoreLibraryDesugaringEnabled = true" if is_kotlin else "coreLibraryDesugaringEnabled true"
-          block = re.search(r"(?ms)(^[ \\t]*compileOptions\\s*\\{.*?)(^[ \\t]*\\})", s)
-          if not block:
-              raise SystemExit(f"Could not find compileOptions block in {p}")
-          if enabled not in block.group(1):
-              indent_match = re.search(r"(?m)^([ \\t]*)\\S", block.group(1).splitlines()[-1])
-              indent = indent_match.group(1) if indent_match else "        "
-              s = s[:block.end(1)] + "\\n" + indent + "    " + enabled + s[block.end(1):]
+
+          # Some recent Flutter templates omit compileOptions entirely. Insert it
+          # into the android block when absent, otherwise update the existing block.
+          match = re.search(r"(?m)^([ \\t]*)compileOptions\\s*\\{", s)
+          if match:
+              start = match.end()
+              depth = 1
+              i = start
+              while i < len(s) and depth:
+                  if s[i] == "{": depth += 1
+                  elif s[i] == "}": depth -= 1
+                  i += 1
+              if depth:
+                  raise SystemExit("Unclosed compileOptions block")
+              block = s[start:i-1]
+              if enabled not in block:
+                  s = s[:i-1] + "\\n            " + enabled + "\\n        " + s[i-1:]
+          else:
+              android = re.search(r"(?m)^([ \\t]*)android\\s*\\{", s)
+              if not android:
+                  raise SystemExit(f"Could not find android block in {p}")
+              start = android.end()
+              depth = 1
+              i = start
+              while i < len(s) and depth:
+                  if s[i] == "{": depth += 1
+                  elif s[i] == "}": depth -= 1
+                  i += 1
+              if depth:
+                  raise SystemExit("Unclosed android block")
+              indent = android.group(1) + "    "
+              if is_kotlin:
+                  block = "\\n" + indent + "compileOptions {\\n" + indent + "    sourceCompatibility = JavaVersion.VERSION_17\\n" + indent + "    targetCompatibility = JavaVersion.VERSION_17\\n" + indent + "    " + enabled + "\\n" + indent + "}\\n"
+              else:
+                  block = "\\n" + indent + "compileOptions {\\n" + indent + "    sourceCompatibility JavaVersion.VERSION_17\\n" + indent + "    targetCompatibility JavaVersion.VERSION_17\\n" + indent + "    " + enabled + "\\n" + indent + "}\\n"
+              s = s[:i-1] + block + s[i-1:]
+
           dependency = ('coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
                         if is_kotlin else
                         'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"')
           if dependency not in s:
-              dep_block = re.search(r"(?ms)(^[ \\t]*dependencies\\s*\\{.*?)(^[ \\t]*\\})", s)
-              if dep_block:
-                  s = s[:dep_block.end(1)] + "\\n    " + dependency + s[dep_block.end(1):]
+              dep = re.search(r"(?m)^dependencies\\s*\\{", s)
+              if dep:
+                  start = dep.end()
+                  depth = 1
+                  i = start
+                  while i < len(s) and depth:
+                      if s[i] == "{": depth += 1
+                      elif s[i] == "}": depth -= 1
+                      i += 1
+                  if depth:
+                      raise SystemExit("Unclosed dependencies block")
+                  s = s[:i-1] + "\\n    " + dependency + "\\n" + s[i-1:]
               else:
                   s += "\\ndependencies {\\n    " + dependency + "\\n}\\n"
           p.write_text(s)
-          print(f"Enabled core library desugaring in regenerated {p}")
+          print(f"Configured core library desugaring in {p}")
           PY
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/-all.zip/-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
