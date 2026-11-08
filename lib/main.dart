@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:quran_data_dart/quran.dart';
+import 'package:adhan/adhan.dart' as adhan;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/azkar_data.dart';
 import 'data/surah_names.dart';
@@ -80,7 +81,7 @@ class _HomeShellState extends State<HomeShell> {
     await prefs.setInt('azkar_$key', value);
   }
 
-  static const tabs = ['الرئيسية', 'القرآن', 'الأذكار', 'السبحة', 'الإعدادات'];
+  static const tabs = ['الرئيسية', 'القرآن', 'الأذكار', 'السبحة', 'المزيد'];
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +128,7 @@ class _HomeShellState extends State<HomeShell> {
                   Icons.menu_book_rounded,
                   Icons.auto_awesome_rounded,
                   Icons.radio_button_checked_rounded,
-                  Icons.tune_rounded,
+                  Icons.grid_view_rounded,
                 ];
                 return InkWell(
                   borderRadius: BorderRadius.circular(18),
@@ -225,24 +226,27 @@ class _HomeShellState extends State<HomeShell> {
           ],
         ),
         const SizedBox(height: 20),
-        _glassCard(
-          child: const Row(
-            children: [
-              Icon(Icons.access_time_rounded, color: Colors.white70, size: 25),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('مواقيت الصلاة', style: TextStyle(fontWeight: FontWeight.w600)),
-                    SizedBox(height: 4),
-                    Text('سيتم تحديد الموقع وطريقة الحساب من الإعدادات',
-                        style: TextStyle(color: Colors.white54, fontSize: 11)),
-                  ],
+        InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage())),
+          child: _glassCard(
+            child: const Row(
+              children: [
+                Icon(Icons.access_time_rounded, color: Colors.white70, size: 25),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('مواقيت الصلاة', style: TextStyle(fontWeight: FontWeight.w600)),
+                      SizedBox(height: 4),
+                      Text('حساب محلي دون إنترنت • اضغط لعرض المواقيت', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    ],
+                  ),
                 ),
-              ),
-              Icon(Icons.chevron_left_rounded, color: Colors.white54),
-            ],
+                Icon(Icons.chevron_left_rounded, color: Colors.white54),
+              ],
+            ),
           ),
         ),
       ],
@@ -653,6 +657,128 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class PrayerTimesPage extends StatefulWidget {
+  const PrayerTimesPage({super.key});
+  @override
+  State<PrayerTimesPage> createState() => _PrayerTimesPageState();
+}
+
+class _PrayerTimesPageState extends State<PrayerTimesPage> {
+  static const cities = <String, List<double>>{
+    'الفيوم': [29.3084, 30.8428],
+    'القاهرة': [30.0444, 31.2357],
+    'الجيزة': [30.0131, 31.2089],
+    'الإسكندرية': [31.2001, 29.9187],
+    'طنطا': [30.7865, 31.0004],
+    'المنصورة': [31.0409, 31.3785],
+    'أسيوط': [27.1809, 31.1837],
+    'الأقصر': [25.6872, 32.6396],
+    'أسوان': [24.0889, 32.8998],
+  };
+  String city = 'الفيوم';
+
+  String _time(DateTime date) {
+    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$hour:$minute ${date.hour < 12 ? 'ص' : 'م'}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final point = cities[city]!;
+    final coordinates = adhan.Coordinates(point[0], point[1]);
+    final params = adhan.CalculationMethod.egyptian.getParameters();
+    params.madhab = adhan.Madhab.shafi;
+    final times = adhan.PrayerTimes.today(coordinates, params);
+    final rows = <MapEntry<String, DateTime>>[
+      MapEntry('الفجر', times.fajr),
+      MapEntry('الشروق', times.sunrise),
+      MapEntry('الظهر', times.dhuhr),
+      MapEntry('العصر', times.asr),
+      MapEntry('المغرب', times.maghrib),
+      MapEntry('العشاء', times.isha),
+    ];
+    final now = DateTime.now();
+    final upcoming = rows.where((e) => e.key != 'الشروق' && e.value.isAfter(now)).toList();
+    final next = upcoming.isNotEmpty ? upcoming.first : rows.first;
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF080808),
+          foregroundColor: Colors.white,
+          title: const Text('مواقيت الصلاة'),
+          centerTitle: true,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(.075),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withOpacity(.16)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('المدينة', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: city,
+                        dropdownColor: const Color(0xFF202020),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(.06),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                        ),
+                        items: cities.keys.map((name) => DropdownMenuItem(value: name, child: Text(name))).toList(),
+                        onChanged: (value) { if (value != null) setState(() => city = value); },
+                      ),
+                      const SizedBox(height: 16),
+                      Text('الصلاة القادمة: ${next.key}', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 5),
+                      Text(_time(next.value), style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                      const SizedBox(height: 6),
+                      const Text('يُعاد الحساب محليًا على جهازك ولا يحتاج إلى اتصال بالإنترنت.', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...rows.map((entry) => Container(
+              margin: const EdgeInsets.only(bottom: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(entry.key == next.key ? .12 : .05),
+                borderRadius: BorderRadius.circular(17),
+                border: Border.all(color: Colors.white.withOpacity(entry.key == next.key ? .25 : .09)),
+              ),
+              child: Row(
+                children: [
+                  Icon(entry.key == 'الشروق' ? Icons.wb_sunny_outlined : Icons.mosque_outlined, color: Colors.white70, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600))),
+                  Text(_time(entry.value), style: const TextStyle(color: Colors.white70, fontFeatures: [ui.FontFeature.tabularFigures()])),
+                ],
+              ),
+            )),
+            const SizedBox(height: 10),
+            const Text('طريقة الحساب: الهيئة المصرية العامة للمساحة. مواقيت الصلاة تقديرية وفق إحداثيات المدينة المختارة وقد تختلف دقائق عن الجداول المحلية الرسمية.', style: TextStyle(color: Colors.white38, fontSize: 11, height: 1.6)),
+          ],
         ),
       ),
     );
