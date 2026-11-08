@@ -7,6 +7,7 @@ import 'package:adhan/adhan.dart' as adhan;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/azkar_data.dart';
 import 'data/surah_names.dart';
+import 'services/prayer_notification_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -389,6 +390,9 @@ class _HomeShellState extends State<HomeShell> {
       }),
       _moreTile(Icons.event_available_outlined, 'متابعة التذكيرات', 'متابعة صيام الاثنين والخميس والصلاة على النبي ﷺ', () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()));
+      }),
+      _moreTile(Icons.notifications_active_outlined, 'مركز الصلاة والتنبيهات', 'مواقيت الصلاة والتنبيه قبل الأذان وعند دخوله', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerCenterPage()));
       }),
       const SizedBox(height: 16),
       const Text('الإعدادات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
@@ -1006,6 +1010,192 @@ class _RemindersPageState extends State<RemindersPage> {
                 contentPadding: EdgeInsets.zero,
               ),
             )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PrayerCenterPage extends StatefulWidget {
+  const PrayerCenterPage({super.key});
+  @override
+  State<PrayerCenterPage> createState() => _PrayerCenterPageState();
+}
+
+class _PrayerCenterPageState extends State<PrayerCenterPage> {
+  static const cities = <String, List<double>>{
+    'الفيوم': [29.3084, 30.8428], 'القاهرة': [30.0444, 31.2357],
+    'الجيزة': [30.0131, 31.2089], 'الإسكندرية': [31.2001, 29.9187],
+    'طنطا': [30.7865, 31.0004], 'المنصورة': [31.0409, 31.3785],
+    'أسيوط': [27.1809, 31.1837], 'الأقصر': [25.6872, 32.6396], 'أسوان': [24.0889, 32.8998],
+  };
+  static const prayerNames = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
+  String city = 'الفيوم';
+  int beforeMinutes = 10;
+  bool notificationsEnabled = false;
+  final Map<String, bool> enabled = {for (final name in prayerNames) name: true};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      city = prefs.getString('prayer_city') ?? 'الفيوم';
+      beforeMinutes = prefs.getInt('prayer_before_minutes') ?? 10;
+      notificationsEnabled = prefs.getBool('prayer_notifications_enabled') ?? false;
+      for (final name in prayerNames) {
+        enabled[name] = prefs.getBool('prayer_enabled_$name') ?? true;
+      }
+    });
+  }
+
+  Future<void> _persistAndSchedule() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('prayer_city', city);
+    await prefs.setInt('prayer_before_minutes', beforeMinutes);
+    await prefs.setBool('prayer_notifications_enabled', notificationsEnabled);
+    for (final name in prayerNames) {
+      await prefs.setBool('prayer_enabled_$name', enabled[name] ?? false);
+    }
+    if (!notificationsEnabled) {
+      await PrayerNotificationService.instance.cancelPrayerAlerts();
+      return;
+    }
+    final granted = await PrayerNotificationService.instance.requestPermissions();
+    if (!granted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('اسمح للتطبيق بالإشعارات من إعدادات الهاتف لتفعيل التنبيهات.')),
+        );
+      }
+      return;
+    }
+    final point = cities[city]!;
+    await PrayerNotificationService.instance.schedulePrayerAlerts(
+      city: city,
+      latitude: point[0],
+      longitude: point[1],
+      enabledPrayers: enabled,
+      beforeMinutes: beforeMinutes,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تحديث تنبيهات الصلاة للأيام السبعة القادمة.')),
+      );
+    }
+  }
+
+  String _time(DateTime value) {
+    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    return hour.toString() + ':' + value.minute.toString().padLeft(2, '0') + (value.hour < 12 ? ' ص' : ' م');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final point = cities[city]!;
+    final params = adhan.CalculationMethod.egyptian.getParameters();
+    params.madhab = adhan.Madhab.shafi;
+    final times = adhan.PrayerTimes.today(adhan.Coordinates(point[0], point[1]), params);
+    final prayerTimes = <String, DateTime>{
+      'الفجر': times.fajr, 'الظهر': times.dhuhr, 'العصر': times.asr,
+      'المغرب': times.maghrib, 'العشاء': times.isha,
+    };
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF080808),
+          foregroundColor: Colors.white,
+          title: const Text('مركز الصلاة'),
+          centerTitle: true,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('المدينة', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: city,
+                dropdownColor: const Color(0xFF202020),
+                decoration: InputDecoration(
+                  filled: true, fillColor: Colors.white.withOpacity(.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                ),
+                items: cities.keys.map((name) => DropdownMenuItem(value: name, child: Text(name))).toList(),
+                onChanged: (value) async {
+                  if (value == null) return;
+                  setState(() => city = value);
+                  await _persistAndSchedule();
+                },
+              ),
+              const SizedBox(height: 12),
+              ...prayerTimes.entries.map((entry) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(children: [
+                  Expanded(child: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600))),
+                  Text(_time(entry.value), style: const TextStyle(color: Colors.white70, fontFeatures: [ui.FontFeature.tabularFigures()])),
+                ]),
+              )),
+            ])),
+            const SizedBox(height: 14),
+            _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: notificationsEnabled,
+                activeColor: Colors.white,
+                title: const Text('تفعيل تنبيهات الصلاة', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('إشعار عند دخول الوقت وإشعار قبله', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                onChanged: (value) async {
+                  setState(() => notificationsEnabled = value);
+                  await _persistAndSchedule();
+                },
+              ),
+              const Divider(color: Colors.white24),
+              const Text('التنبيه قبل الصلاة', style: TextStyle(fontSize: 12, color: Colors.white70)),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<int>(
+                value: beforeMinutes,
+                dropdownColor: const Color(0xFF202020),
+                decoration: InputDecoration(
+                  filled: true, fillColor: Colors.white.withOpacity(.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 0, child: Text('بدون تنبيه مسبق')),
+                  DropdownMenuItem(value: 5, child: Text('قبلها بـ 5 دقائق')),
+                  DropdownMenuItem(value: 10, child: Text('قبلها بـ 10 دقائق')),
+                  DropdownMenuItem(value: 15, child: Text('قبلها بـ 15 دقيقة')),
+                ],
+                onChanged: (value) async {
+                  if (value == null) return;
+                  setState(() => beforeMinutes = value);
+                  await _persistAndSchedule();
+                },
+              ),
+              const SizedBox(height: 10),
+              const Text('اختيار الصلوات', style: TextStyle(fontSize: 12, color: Colors.white70)),
+              ...prayerNames.map((name) => SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: enabled[name] ?? false,
+                activeColor: Colors.white,
+                title: Text(name, style: const TextStyle(fontSize: 13)),
+                onChanged: notificationsEnabled ? (value) async {
+                  setState(() => enabled[name] = value);
+                  await _persistAndSchedule();
+                } : null,
+              )),
+              const SizedBox(height: 6),
+              const Text('التنبيهات الحالية إشعارات قصيرة بصوت الإشعار الافتراضي للهاتف. تشغيل الأذان الكامل واختيار مؤذن مختلف لكل صلاة يحتاج إضافة ملفات صوتية مرخّصة واختبار تشغيلها في الخلفية، ولم أفعّله كميزة مكتملة بعد.', style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.6)),
+            ])),
           ],
         ),
       ),
