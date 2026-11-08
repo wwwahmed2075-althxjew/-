@@ -48,6 +48,7 @@ class _HomeShellState extends State<HomeShell> {
   String azkarCategory = awwabAzkar.keys.first;
   final Map<String, int> azkarProgress = {};
   double textScale = 1.0;
+  String fontFamily = 'sans-serif';
 
   @override
   void initState() {
@@ -61,6 +62,7 @@ class _HomeShellState extends State<HomeShell> {
     setState(() {
       tasbeehCount = prefs.getInt('tasbeeh_count') ?? 0;
       textScale = prefs.getDouble('text_scale') ?? 1.0;
+      fontFamily = prefs.getString('font_family') ?? 'sans-serif';
       for (final category in awwabAzkar.keys) {
         final items = awwabAzkar[category]!;
         for (var i = 0; i < items.length; i++) {
@@ -104,54 +106,54 @@ class _HomeShellState extends State<HomeShell> {
         ),
         bottomNavigationBar: SafeArea(
           top: false,
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(14, 6, 14, 10),
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xCC202020),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white.withOpacity(.13)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(.35),
-                  blurRadius: 22,
-                  offset: const Offset(0, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xAA202020),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: Colors.white.withOpacity(.16)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(.35), blurRadius: 22, offset: const Offset(0, 8)),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(tabs.length, (index) {
-                final active = selectedTab == index;
-                final icons = [
-                  Icons.home_rounded,
-                  Icons.menu_book_rounded,
-                  Icons.auto_awesome_rounded,
-                  Icons.radio_button_checked_rounded,
-                  Icons.grid_view_rounded,
-                ];
-                return InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () => setState(() => selectedTab = index),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icons[index], size: 20,
-                            color: active ? Colors.white : Colors.white54),
-                        const SizedBox(height: 3),
-                        Text(tabs[index],
-                            style: TextStyle(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List.generate(tabs.length, (index) {
+                    final active = selectedTab == index;
+                    final icons = [
+                      Icons.home_rounded,
+                      Icons.menu_book_rounded,
+                      Icons.auto_awesome_rounded,
+                      Icons.radio_button_checked_rounded,
+                      Icons.grid_view_rounded,
+                    ];
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => setState(() => selectedTab = index),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(icons[index], size: 20, color: active ? Colors.white : Colors.white54),
+                            const SizedBox(height: 3),
+                            Text(tabs[index], style: TextStyle(
                               fontSize: 10,
                               color: active ? Colors.white : Colors.white54,
                               fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                             )),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ),
@@ -179,12 +181,7 @@ class _HomeShellState extends State<HomeShell> {
               ),
             ),
             _glassIcon(Icons.notifications_none_rounded, onTap: () {
-              showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
-                backgroundColor: const Color(0xFF202020),
-                title: const Text('الإشعارات'),
-                content: const Text('لا توجد إشعارات جديدة حاليًا.'),
-                actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('حسنًا'))],
-              ));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()));
             }),
           ],
         ),
@@ -216,12 +213,7 @@ class _HomeShellState extends State<HomeShell> {
             _feature(Icons.favorite_border_rounded, 'الأذكار', 'حصنك اليومي', onTap: () => setState(() => selectedTab = 2)),
             _feature(Icons.radio_button_checked_rounded, 'السبحة', 'اذكر الله', onTap: () => setState(() => selectedTab = 3)),
             _feature(Icons.mosque_rounded, 'الصلاة', 'المواقيت والأذان', onTap: () {
-              showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
-                backgroundColor: const Color(0xFF202020),
-                title: const Text('مواقيت الصلاة'),
-                content: const Text('ميزة مواقيت الصلاة والأذان لم تُفعّل بعد. لن نعرض مواعيد غير محسوبة أو غير موثوقة.'),
-                actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('حسنًا'))],
-              ));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage()));
             }),
           ],
         ),
@@ -441,6 +433,31 @@ class _HomeShellState extends State<HomeShell> {
         const SizedBox(height: 8),
         Text('معاينة النص', style: TextStyle(fontSize: 15 * textScale)),
         Slider(value: textScale, min: 0.85, max: 1.25, divisions: 8, activeColor: Colors.white, onChanged: (v) async { setState(() => textScale = v); final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', v); }),
+      ])),
+      const SizedBox(height: 12),
+      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('نوع الخط', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: fontFamily,
+          dropdownColor: const Color(0xFF202020),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white.withOpacity(.05),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          ),
+          items: const [
+            DropdownMenuItem(value: 'sans-serif', child: Text('خط النظام')),
+            DropdownMenuItem(value: 'serif', child: Text('خط كلاسيكي')),
+            DropdownMenuItem(value: 'monospace', child: Text('خط ثابت')),
+          ],
+          onChanged: (value) async {
+            if (value == null) return;
+            setState(() => fontFamily = value);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('font_family', value);
+          },
+        ),
       ])),
       const SizedBox(height: 12),
       _glassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
