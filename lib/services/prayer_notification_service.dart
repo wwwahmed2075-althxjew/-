@@ -92,7 +92,7 @@ class PrayerNotificationService {
               'باقي $beforeMinutes دقائق على أذان $name',
               reminderTime,
               details,
-              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+              androidScheduleMode: _exactAlarmsAllowed ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
             );
           }
         }
