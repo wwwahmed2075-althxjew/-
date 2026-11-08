@@ -600,9 +600,15 @@ class _HomePrayerSummaryState extends State<HomePrayerSummary> {
       MapEntry('الظهر', times.dhuhr), MapEntry('العصر', times.asr),
       MapEntry('المغرب', times.maghrib), MapEntry('العشاء', times.isha),
     ];
+    final fajrEnd = times.fajr.isBefore(times.maghrib)
+        ? times.fajr.add(const Duration(days: 1))
+        : times.fajr;
+    final nightSeconds = fajrEnd.difference(times.maghrib).inSeconds;
+    final qiyamStart = times.maghrib.add(Duration(seconds: (nightSeconds * 2 / 3).round()));
+    rows.add(MapEntry('قيام الليل', qiyamStart));
     MapEntry<String, DateTime>? next;
     for (final row in rows) {
-      if (row.key != 'الشروق' && row.value.isAfter(now)) { next = row; break; }
+      if (row.key != 'الشروق' && row.key != 'قيام الليل' && row.value.isAfter(now)) { next = row; break; }
     }
     final upcoming = next ?? rows.first;
     final target = next == null ? upcoming.value.add(const Duration(days: 1)) : upcoming.value;
