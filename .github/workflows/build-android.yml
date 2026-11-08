@@ -32,19 +32,34 @@ jobs:
           flutter create --platforms=android --org com.awwab.app --project-name awwab .
           # Re-apply app-specific Android settings after flutter create regenerates android/.
           python3 - <<'PY'
+          import re
           from pathlib import Path
-          p = Path("android/app/build.gradle")
+
+          candidates = [Path("android/app/build.gradle"), Path("android/app/build.gradle.kts")]
+          p = next((candidate for candidate in candidates if candidate.exists()), None)
+          if p is None:
+              raise SystemExit("Flutter did not generate app/build.gradle or app/build.gradle.kts")
           s = p.read_text()
-          s = s.replace(
-              '        targetCompatibility JavaVersion.VERSION_17\n',
-              '        targetCompatibility JavaVersion.VERSION_17\n        coreLibraryDesugaringEnabled true\n'
-          )
-          if 'coreLibraryDesugaringEnabled true' not in s:
-              raise SystemExit("Could not enable core library desugaring in generated build.gradle")
-          if 'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"' not in s:
-              s += '\ndependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"\n}\n'
+          is_kotlin = p.suffix == ".kts"
+          enabled = "isCoreLibraryDesugaringEnabled = true" if is_kotlin else "coreLibraryDesugaringEnabled true"
+          block = re.search(r"(?ms)(^[ \\t]*compileOptions\\s*\\{.*?)(^[ \\t]*\\})", s)
+          if not block:
+              raise SystemExit(f"Could not find compileOptions block in {p}")
+          if enabled not in block.group(1):
+              indent_match = re.search(r"(?m)^([ \\t]*)\\S", block.group(1).splitlines()[-1])
+              indent = indent_match.group(1) if indent_match else "        "
+              s = s[:block.end(1)] + "\\n" + indent + "    " + enabled + s[block.end(1):]
+          dependency = ('coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+                        if is_kotlin else
+                        'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"')
+          if dependency not in s:
+              dep_block = re.search(r"(?ms)(^[ \\t]*dependencies\\s*\\{.*?)(^[ \\t]*\\})", s)
+              if dep_block:
+                  s = s[:dep_block.end(1)] + "\\n    " + dependency + s[dep_block.end(1):]
+              else:
+                  s += "\\ndependencies {\\n    " + dependency + "\\n}\\n"
           p.write_text(s)
-          print("Enabled core library desugaring in regenerated Android app")
+          print(f"Enabled core library desugaring in regenerated {p}")
           PY
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/-all.zip/-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
