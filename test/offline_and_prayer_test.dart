@@ -1,21 +1,25 @@
 import 'package:adhan/adhan.dart' as adhan;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quran_data_dart/quran.dart';
+import 'package:mushaf_text/mushaf_text.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('Quran data opens locally without a network request', () async {
-    await QuranService.initialize();
-    final fatiha = await QuranService.getSurah(1);
-    expect(fatiha.name, isNotEmpty);
-    expect(fatiha.numberOfAyahs, 7);
-    expect(fatiha.ayat.first.text, isNotEmpty);
-    final kursi = await QuranService.getAyah(2, 255);
-    expect(kursi.text, isNotEmpty);
+  test('Complete Quran text and Madinah page data load locally', () async {
+    final fatiha = await Quran.ayah(1, 1);
+    expect(fatiha, isNotNull);
+    expect(fatiha!.text, isNotEmpty);
+
+    final kursi = await Quran.ayah(2, 255);
+    expect(kursi, isNotNull);
+    expect(kursi!.text, isNotEmpty);
+
+    final page = await Quran.page(3);
+    expect(page, isNotEmpty);
+    expect(page.every((ayah) => ayah.text.isNotEmpty), isTrue);
   });
 
-  test('Egyptian prayer calculation returns all daily times locally', () {
+  test('Egyptian prayer calculation returns ordered daily times locally', () {
     final coordinates = adhan.Coordinates(29.3084, 30.8428);
     final parameters = adhan.CalculationMethod.egyptian.getParameters();
     final times = adhan.PrayerTimes.today(coordinates, parameters);
