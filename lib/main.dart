@@ -38,7 +38,137 @@ class AwwabApp extends StatelessWidget {
         fontFamily: 'Roboto',
         useMaterial3: true,
       ),
-      home: const HomeShell(),
+      home: const AwwabSplashScreen(),
+    );
+  }
+}
+
+
+class AwwabSplashScreen extends StatefulWidget {
+  const AwwabSplashScreen({super.key});
+
+  @override
+  State<AwwabSplashScreen> createState() => _AwwabSplashScreenState();
+}
+
+class _AwwabSplashScreenState extends State<AwwabSplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _scale = Tween<double>(begin: .88, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+    _controller.forward();
+    Future<void>.delayed(const Duration(milliseconds: 2600), () {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder<void>(
+          pageBuilder: (_, __, ___) => const HomeShell(),
+          transitionDuration: const Duration(milliseconds: 500),
+          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+            child: child,
+          ),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF050505),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, -.18),
+                radius: 1.05,
+                colors: [const Color(0xFF242424), const Color(0xFF080808), Colors.black],
+              ),
+            ),
+          ),
+          Center(
+            child: FadeTransition(
+              opacity: _fade,
+              child: ScaleTransition(
+                scale: _scale,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(34),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 24),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(.055),
+                            borderRadius: BorderRadius.circular(34),
+                            border: Border.all(color: Colors.white.withOpacity(.17)),
+                            boxShadow: [
+                              BoxShadow(color: Colors.white.withOpacity(.035), blurRadius: 38, spreadRadius: 2),
+                            ],
+                          ),
+                          child: const Text(
+                            'أوّاب',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 48,
+                              height: 1.25,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: .4,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      'أوّاب كل يوم… أقرب إلى الله',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: .2,
+                      ),
+                    ),
+                    const SizedBox(height: 42),
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(.55)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
