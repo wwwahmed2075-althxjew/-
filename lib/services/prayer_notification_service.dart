@@ -8,6 +8,7 @@ class PrayerNotificationService {
   static final PrayerNotificationService instance = PrayerNotificationService._();
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  bool _exactAlarmsAllowed = false;
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -24,7 +25,7 @@ class PrayerNotificationService {
     await initialize();
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     final notifications = await android?.requestNotificationsPermission();
-    await android?.requestExactAlarmsPermission();
+    _exactAlarmsAllowed = await android?.requestExactAlarmsPermission() ?? false;
     return notifications ?? false;
   }
 
@@ -79,7 +80,7 @@ class PrayerNotificationService {
             'حيّ على الصلاة — $city',
             prayerTime,
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode: _exactAlarmsAllowed ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
           );
         }
         if (beforeMinutes > 0) {
