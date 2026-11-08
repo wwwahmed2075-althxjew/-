@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -168,89 +169,39 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Widget _homePage() {
-    return ListView(
-      key: const ValueKey('home'),
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
-      children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('السَّلَامُ عَلَيْكُمْ',
-                      style: TextStyle(color: Colors.white70, fontSize: 13)),
-                  SizedBox(height: 5),
-                  Text('أهلًا بك في آواب',
-                      style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
-                ],
-              ),
-            ),
-            _glassIcon(Icons.notifications_none_rounded, onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()));
-            }),
-          ],
-        ),
-        const SizedBox(height: 26),
-        _glassCard(
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('وَاذْكُر رَّبَّكَ كَثِيرًا',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
-              SizedBox(height: 9),
-              Text('اجعل لسانك عامرًا بذكر الله',
-                  style: TextStyle(color: Colors.white60, fontSize: 13)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
-        const Text('مساحتك اليومية', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.55,
-          children: [
-            _feature(Icons.menu_book_rounded, 'القرآن الكريم', 'تلاوة وورد', onTap: () => setState(() => selectedTab = 1)),
-            _feature(Icons.favorite_border_rounded, 'الأذكار', 'حصنك اليومي', onTap: () => setState(() => selectedTab = 2)),
-            _feature(Icons.radio_button_checked_rounded, 'السبحة', 'اذكر الله', onTap: () => setState(() => selectedTab = 3)),
-            _feature(Icons.mosque_rounded, 'الصلاة', 'المواقيت والأذان', onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage()));
-            }),
-          ],
-        ),
-        const SizedBox(height: 20),
-        InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage())),
-          child: _glassCard(
-            child: const Row(
-              children: [
-                Icon(Icons.access_time_rounded, color: Colors.white70, size: 25),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('مواقيت الصلاة', style: TextStyle(fontWeight: FontWeight.w600)),
-                      SizedBox(height: 4),
-                      Text('حساب محلي دون إنترنت • اضغط لعرض المواقيت', style: TextStyle(color: Colors.white54, fontSize: 11)),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_left_rounded, color: Colors.white54),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+    return ListView(key: const ValueKey('home'), padding: const EdgeInsets.fromLTRB(18, 16, 18, 24), children: [
+      Row(children: [
+        _glassIcon(Icons.location_on_outlined, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage()))),
+        const Spacer(),
+        _glassIcon(Icons.nightlight_round, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()))),
+      ]),
+      const SizedBox(height: 14),
+      const Text('السَّلَامُ عَلَيْكُمْ', style: TextStyle(color: Colors.white70, fontSize: 13)),
+      const SizedBox(height: 5),
+      Text(DateTime.now().hour < 12 ? 'صباح الخير' : 'مساء الخير', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 18),
+      _glassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('وَاذْكُر رَّبَّكَ كَثِيرًا', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
+        SizedBox(height: 7),
+        Text('اجعل لسانك عامرًا بذكر الله', style: TextStyle(color: Colors.white60, fontSize: 13)),
+      ])),
+      const SizedBox(height: 18),
+      const Text('مواقيت الصلاة', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 10),
+      const HomePrayerSummary(),
+      const SizedBox(height: 20),
+      const Text('اختصاراتك', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 11),
+      GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.7, children: [
+        _feature(Icons.menu_book_rounded, 'القرآن الكريم', 'المصحف والقراءة', onTap: () => setState(() => selectedTab = 1)),
+        _feature(Icons.auto_awesome_rounded, 'الأذكار', 'الصباح والمساء', onTap: () => setState(() => selectedTab = 2)),
+        _feature(Icons.radio_button_checked_rounded, 'السبحة', 'عداد الذكر', onTap: () => setState(() => selectedTab = 3)),
+        _feature(Icons.mosque_outlined, 'مواقيت الصلاة', 'الصلاة القادمة', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage()))),
+        _feature(Icons.shield_moon_outlined, 'الرقية الشرعية', 'آيات وأدعية', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RuqyahPage()))),
+        _feature(Icons.notifications_active_outlined, 'التذكيرات', 'مواعيد وأوراد', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()))),
+      ]),
+    ]);
   }
-
 
   Widget _quranPage() {
     final surahs = Quran.surahs.where((surah) {
@@ -590,6 +541,107 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
+
+class HomePrayerSummary extends StatefulWidget {
+  const HomePrayerSummary({super.key});
+  @override
+  State<HomePrayerSummary> createState() => _HomePrayerSummaryState();
+}
+
+class _HomePrayerSummaryState extends State<HomePrayerSummary> {
+  static const places = <String, List<double>>{
+    'الفيوم': [29.3084, 30.8428], 'القاهرة': [30.0444, 31.2357],
+    'الجيزة': [30.0131, 31.2089], 'الإسكندرية': [31.2001, 29.9187],
+    'طنطا': [30.7865, 31.0004], 'المنصورة': [31.0409, 31.3785],
+    'أسيوط': [27.1809, 31.1837], 'الأقصر': [25.6872, 32.6396], 'أسوان': [24.0889, 32.8998],
+  };
+  String city = 'الفيوم';
+  DateTime now = DateTime.now();
+  Timer? ticker;
+  @override
+  void initState() {
+    super.initState();
+    ticker = Timer.periodic(const Duration(seconds: 1), (_) { if (mounted) setState(() => now = DateTime.now()); });
+  }
+  @override
+  void dispose() { ticker?.cancel(); super.dispose(); }
+
+  String _time(DateTime d) {
+    final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
+    return '$h:' + d.minute.toString().padLeft(2, '0') + (d.hour < 12 ? ' ص' : ' م');
+  }
+  String _left(DateTime d) {
+    final n = d.difference(now).inSeconds;
+    if (n < 0) return 'انتهى';
+    return (n ~/ 3600).toString().padLeft(2, '0') + ':' +
+      ((n % 3600) ~/ 60).toString().padLeft(2, '0') + ':' +
+      (n % 60).toString().padLeft(2, '0');
+  }
+  @override
+  Widget build(BuildContext context) {
+    final p = places[city]!;
+    final params = adhan.CalculationMethod.egyptian.getParameters();
+    final times = adhan.PrayerTimes.today(adhan.Coordinates(p[0], p[1]), params);
+    final rows = <MapEntry<String, DateTime>>[
+      MapEntry('الفجر', times.fajr), MapEntry('الشروق', times.sunrise),
+      MapEntry('الظهر', times.dhuhr), MapEntry('العصر', times.asr),
+      MapEntry('المغرب', times.maghrib), MapEntry('العشاء', times.isha),
+    ];
+    MapEntry<String, DateTime>? next;
+    for (final row in rows) {
+      if (row.key != 'الشروق' && row.value.isAfter(now)) { next = row; break; }
+    }
+    final upcoming = next ?? rows.first;
+    final target = next == null ? upcoming.value.add(const Duration(days: 1)) : upcoming.value;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(.065), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(.16))),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.location_on_outlined, size: 16, color: Colors.white70),
+              const SizedBox(width: 4),
+              DropdownButton<String>(
+                value: city, dropdownColor: const Color(0xFF202020), underline: const SizedBox.shrink(), isDense: true,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+                items: places.keys.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                onChanged: (v) { if (v != null) setState(() => city = v); },
+              ),
+              const Spacer(),
+              Text('الصلاة القادمة: ' + upcoming.key, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+            ]),
+            const SizedBox(height: 5),
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(_time(target), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+              const Spacer(),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                const Text('الوقت المتبقي', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                Text(_left(target), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, fontFeatures: [ui.FontFeature.tabularFigures()])),
+              ]),
+            ]),
+            const SizedBox(height: 12),
+            Wrap(spacing: 7, runSpacing: 7, children: rows.map((row) {
+              final targetTime = row.value.isAfter(now) ? row.value : row.value.add(const Duration(days: 1));
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                decoration: BoxDecoration(color: row.key == upcoming.key ? Colors.white.withOpacity(.16) : Colors.white.withOpacity(.045), borderRadius: BorderRadius.circular(11), border: Border.all(color: Colors.white.withOpacity(.1))),
+                child: Column(children: [
+                  Text(row.key, style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                  const SizedBox(height: 3),
+                  Text(_time(row.value), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+                  Text(_left(targetTime), style: const TextStyle(fontSize: 9, color: Colors.white54, fontFeatures: [ui.FontFeature.tabularFigures()])),
+                ]),
+              );
+            }).toList()),
+          ]),
+        ),
+      ),
+    );
+  }
+}
 
 class QuranReaderPage extends StatefulWidget {
   final int initialPage;
