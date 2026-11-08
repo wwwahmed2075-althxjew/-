@@ -27,6 +27,9 @@ jobs:
           printf "sdk.dir=%s\n" "$ANDROID_HOME" >> android/local.properties
           cd android
           gradle wrapper --gradle-version 8.13
+          printf "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.13-bin.zip\n" > gradle/wrapper/gradle-wrapper.properties
+          chmod +x gradlew
+          ./gradlew --version
       - name: Install dependencies
         run: flutter pub get
       - name: Analyze
