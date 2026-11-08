@@ -1,12 +1,13 @@
-import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:quran_data_dart/quran.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/azkar_data.dart';
 import 'data/surah_names.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await QuranService.initialize();
   runApp(const AwwabApp());
 }
 
@@ -464,25 +465,32 @@ class QuranReaderPage extends StatefulWidget {
 }
 
 class _QuranReaderPageState extends State<QuranReaderPage> {
-  late Future<List<dynamic>> ayahsFuture;
+  late Future<Surah> surahFuture;
+  double fontSize = 27;
+  int lastReadAyah = 1;
 
   @override
   void initState() {
     super.initState();
-    ayahsFuture = _loadAyahs();
+    surahFuture = QuranService.getSurah(widget.surahNumber);
+    _loadLastRead();
   }
 
-  Future<List<dynamic>> _loadAyahs() async {
-    final url = Uri.parse('https://api.alquran.cloud/v1/surah/' + widget.surahNumber.toString() + '/quran-uthmani');
-    final response = await http.get(url).timeout(const Duration(seconds: 20));
-    if (response.statusCode != 200) throw Exception('تعذر تحميل السورة. حاول مرة أخرى.');
-    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded['code'] != 200 || decoded['data'] == null) throw Exception('لم يصل نص السورة بشكل صحيح.');
-    return decoded['data']['ayahs'] as List<dynamic>;
+  Future<void> _loadLastRead() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => lastReadAyah = prefs.getInt('last_ayah_${widget.surahNumber}') ?? 1);
   }
 
-  void _retry() {
-    setState(() { ayahsFuture = _loadAyahs(); });
+  Future<void> _saveLastRead(int ayah) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('last_surah', widget.surahNumber);
+    await prefs.setInt('last_ayah_${widget.surahNumber}', ayah);
+    if (!mounted) return;
+    setState(() => lastReadAyah = ayah);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم حفظ موضع القراءة على جهازك'), duration: Duration(seconds: 1)),
+    );
   }
 
   @override
@@ -491,70 +499,157 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: const Color(0xFF080808),
-        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: Text(widget.surahName), centerTitle: true),
-        body: FutureBuilder<List<dynamic>>(
-          future: ayahsFuture,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF080808),
+          foregroundColor: Colors.white,
+          title: Text(widget.surahName),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              tooltip: 'حفظ موضع القراءة',
+              onPressed: () => _saveLastRead(lastReadAyah),
+              icon: const Icon(Icons.bookmark_add_outlined),
+            ),
+          ],
+        ),
+        body: FutureBuilder<Surah>(
+          future: surahFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator(color: Colors.white));
             }
-            if (snapshot.hasError) {
-              return Center(
+            if (snapshot.hasError || !snapshot.hasData) {
+              return const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(26),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 38),
-                      const SizedBox(height: 14),
-                      const Text('لم نتمكن من تحميل السورة', style: TextStyle(color: Colors.white, fontSize: 18)),
-                      const SizedBox(height: 8),
-                      const Text('تأكد من اتصال الإنترنت ثم حاول مرة أخرى.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54, height: 1.6)),
-                      const SizedBox(height: 16),
-                      OutlinedButton.icon(onPressed: _retry, icon: const Icon(Icons.refresh_rounded), label: const Text('إعادة المحاولة')),
-                    ],
-                  ),
+                  padding: EdgeInsets.all(24),
+                  child: Text('تعذر فتح بيانات المصحف المحلية. أعد تشغيل التطبيق أو حدّثه.', textAlign: TextAlign.center),
                 ),
               );
             }
-            final ayahs = snapshot.data ?? [];
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+            final surah = snapshot.data!;
+            return Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(.05), borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white.withOpacity(.12))),
-                  child: Column(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(.07),
+                          border: Border.all(color: Colors.white.withOpacity(.15)),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Column(
+                          children: [
+                            Text('سُورَةُ ${surah.name}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 5),
+                            Text('${surah.numberOfAyahs} آية • ${surah.revelationType == 'Meccan' ? 'مكية' : 'مدنية'}',
+                              style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Text('حجم الخط', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                                Expanded(
+                                  child: Slider(
+                                    value: fontSize,
+                                    min: 21,
+                                    max: 38,
+                                    divisions: 17,
+                                    activeColor: Colors.white,
+                                    onChanged: (v) => setState(() => fontSize = v),
+                                  ),
+                                ),
+                                Text(fontSize.round().toString(), style: const TextStyle(fontSize: 11)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: surah.ayat.length,
+                    itemBuilder: (context, index) {
+                      final ayah = surah.ayat[index];
+                      final isLastRead = ayah.id == lastReadAyah;
+                      return GestureDetector(
+                        onTap: () => _saveLastRead(ayah.id),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                          decoration: BoxDecoration(
+                            color: isLastRead ? Colors.white.withOpacity(.105) : Colors.white.withOpacity(.045),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isLastRead ? Colors.white.withOpacity(.32) : Colors.white.withOpacity(.09)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(ayah.text,
+                                textAlign: TextAlign.justify,
+                                textDirection: TextDirection.rtl,
+                                style: TextStyle(fontSize: fontSize, height: 2.05, color: Colors.white, fontWeight: FontWeight.w400)),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 27, height: 27,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white38)),
+                                    child: Text(ayah.id.toString(), style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                                  ),
+                                  const Spacer(),
+                                  if (ayah.sajdah) const Text('۩ سجدة', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: 'حفظ موضع القراءة',
+                                    onPressed: () => _saveLastRead(ayah.id),
+                                    icon: const Icon(Icons.bookmark_border_rounded, size: 19, color: Colors.white60),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: Row(
                     children: [
-                      Text('سُورَةُ ' + widget.surahName, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text(ayahs.length.toString() + ' آية', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: widget.surahNumber > 1
+                            ? () => Navigator.pushReplacement(context, MaterialPageRoute(
+                                builder: (_) => QuranReaderPage(surahNumber: widget.surahNumber - 1, surahName: awwabSurahNames[widget.surahNumber - 2])))
+                            : null,
+                          icon: const Icon(Icons.chevron_right_rounded),
+                          label: const Text('السورة السابقة'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: widget.surahNumber < 114
+                            ? () => Navigator.pushReplacement(context, MaterialPageRoute(
+                                builder: (_) => QuranReaderPage(surahNumber: widget.surahNumber + 1, surahName: awwabSurahNames[widget.surahNumber])))
+                            : null,
+                          icon: const Icon(Icons.chevron_left_rounded),
+                          label: const Text('السورة التالية'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ...ayahs.map((ayah) {
-                  final verseText = ayah['text'] as String? ?? '';
-                  final number = ayah['numberInSurah'];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    child: Column(
-                      children: [
-                        Text(verseText, textAlign: TextAlign.center, textDirection: TextDirection.rtl, style: const TextStyle(color: Colors.white, fontSize: 25, height: 2.0, fontWeight: FontWeight.w400)),
-                        const SizedBox(height: 9),
-                        Container(
-                          width: 30, height: 30, alignment: Alignment.center,
-                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(.22))),
-                          child: Text(number.toString(), style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                        ),
-                        const SizedBox(height: 12),
-                        Divider(color: Colors.white.withOpacity(.08)),
-                      ],
-                    ),
-                  );
-                }),
-                const SizedBox(height: 12),
-                const Text('مصدر النص: AlQuran Cloud — يلزم الاتصال بالإنترنت.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 10)),
               ],
             );
           },
