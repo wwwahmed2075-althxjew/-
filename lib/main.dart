@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_compass/flutter_compass.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:mushaf_text/mushaf_text.dart';
 import 'package:adhan/adhan.dart' as adhan;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -398,6 +399,9 @@ class _HomeShellState extends State<HomeShell> {
       }),
       _moreTile(Icons.explore_outlined, 'اتجاه القبلة', 'بوصلة حية باستخدام مستشعر الهاتف', () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const QiblaPage()));
+      }),
+      _moreTile(Icons.calendar_month_outlined, 'التقويم الهجري والمناسبات', 'التاريخ الهجري والمناسبات الإسلامية', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const HijriCalendarPage()));
       }),
       const SizedBox(height: 16),
       const Text('الإعدادات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
@@ -1015,6 +1019,72 @@ class _RemindersPageState extends State<RemindersPage> {
                 contentPadding: EdgeInsets.zero,
               ),
             )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HijriCalendarPage extends StatelessWidget {
+  const HijriCalendarPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    HijriCalendar.setLocal('ar');
+    final today = HijriCalendar.now();
+    final events = <List<String>>[
+      ['1 محرم', 'رأس السنة الهجرية'],
+      ['10 محرم', 'يوم عاشوراء'],
+      ['12 ربيع الأول', 'المولد النبوي — يختلف الاحتفاء به بين المسلمين'],
+      ['1 رمضان', 'بداية شهر رمضان'],
+      ['27 رمضان', 'ليلة يُرجى أن توافق ليلة القدر، وليلة القدر تُلتمس في العشر الأواخر'],
+      ['1 شوال', 'عيد الفطر'],
+      ['9 ذو الحجة', 'يوم عرفة'],
+      ['10 ذو الحجة', 'عيد الأضحى'],
+    ];
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF080808),
+          foregroundColor: Colors.white,
+          title: const Text('التقويم الهجري'),
+          centerTitle: true,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            _glassCard(child: Column(children: [
+              const Icon(Icons.nightlight_round, size: 34, color: Colors.white70),
+              const SizedBox(height: 12),
+              Text(today.getDayName() + ' ' + today.hDay.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 5),
+              Text(today.getLongMonthName() + ' ' + today.hYear.toString() + ' هـ', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 10),
+              Text('عدد أيام الشهر: ' + today.lengthOfMonth.toString(), style: const TextStyle(color: Colors.white60, fontSize: 12)),
+              const SizedBox(height: 8),
+              Text('الموافق ميلاديًا: ' + DateTime.now().day.toString().padLeft(2, '0') + '/' + DateTime.now().month.toString().padLeft(2, '0') + '/' + DateTime.now().year.toString(), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            ])),
+            const SizedBox(height: 16),
+            const Text('أهم المناسبات الإسلامية', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 10),
+            ...events.map((event) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(.05),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.white.withOpacity(.1)),
+              ),
+              child: Row(children: [
+                SizedBox(width: 105, child: Text(event[0], style: const TextStyle(color: Colors.white70, fontSize: 12))),
+                Expanded(child: Text(event[1], style: const TextStyle(fontSize: 13))),
+              ]),
+            )),
+            const SizedBox(height: 8),
+            const Text('التاريخ محسوب وفق تقويم أم القرى، وقد يختلف يومًا عن الإعلان الرسمي في مصر تبعًا لرؤية الهلال.', style: TextStyle(color: Colors.white38, fontSize: 11, height: 1.6)),
           ],
         ),
       ),
