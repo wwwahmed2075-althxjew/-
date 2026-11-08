@@ -1,7 +1,7 @@
 name: awwab
 description: تطبيق آواب الإسلامي
 publish_to: "none"
-version: 1.0.3+4
+version: 1.0.4+5
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.3.2
-  quran_data_dart: ^1.7.1
+  mushaf_text: ^1.4.1
   adhan: ^2.0.0+1
 
 dev_dependencies:
