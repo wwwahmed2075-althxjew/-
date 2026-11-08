@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:ui' as ui;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:mushaf_text/mushaf_text.dart';
 import 'package:adhan/adhan.dart' as adhan;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -393,6 +395,9 @@ class _HomeShellState extends State<HomeShell> {
       }),
       _moreTile(Icons.notifications_active_outlined, 'مركز الصلاة والتنبيهات', 'مواقيت الصلاة والتنبيه قبل الأذان وعند دخوله', () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerCenterPage()));
+      }),
+      _moreTile(Icons.explore_outlined, 'اتجاه القبلة', 'بوصلة حية باستخدام مستشعر الهاتف', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const QiblaPage()));
       }),
       const SizedBox(height: 16),
       const Text('الإعدادات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
@@ -1010,6 +1015,101 @@ class _RemindersPageState extends State<RemindersPage> {
                 contentPadding: EdgeInsets.zero,
               ),
             )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class QiblaPage extends StatefulWidget {
+  const QiblaPage({super.key});
+  @override
+  State<QiblaPage> createState() => _QiblaPageState();
+}
+
+class _QiblaPageState extends State<QiblaPage> {
+  static const cities = <String, List<double>>{
+    'الفيوم': [29.3084, 30.8428], 'القاهرة': [30.0444, 31.2357],
+    'الجيزة': [30.0131, 31.2089], 'الإسكندرية': [31.2001, 29.9187],
+    'طنطا': [30.7865, 31.0004], 'المنصورة': [31.0409, 31.3785],
+    'أسيوط': [27.1809, 31.1837], 'الأقصر': [25.6872, 32.6396], 'أسوان': [24.0889, 32.8998],
+  };
+  String city = 'الفيوم';
+
+  @override
+  Widget build(BuildContext context) {
+    final point = cities[city]!;
+    final bearing = adhan.Qibla(adhan.Coordinates(point[0], point[1])).direction;
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF080808),
+          foregroundColor: Colors.white,
+          title: const Text('اتجاه القبلة'),
+          centerTitle: true,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(22),
+          children: [
+            _glassCard(child: Column(children: [
+              const Text('اختر مدينتك لحساب اتجاه القبلة', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const SizedBox(height: 8),
+              DropdownButton<String>(
+                value: city,
+                dropdownColor: const Color(0xFF202020),
+                underline: const SizedBox.shrink(),
+                items: cities.keys.map((name) => DropdownMenuItem(value: name, child: Text(name))).toList(),
+                onChanged: (value) { if (value != null) setState(() => city = value); },
+              ),
+              const SizedBox(height: 20),
+              Text(bearing.toStringAsFixed(1) + '° من الشمال', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            ])),
+            const SizedBox(height: 28),
+            StreamBuilder<CompassEvent>(
+              stream: FlutterCompass.events,
+              builder: (context, snapshot) {
+                final heading = snapshot.data?.heading;
+                if (heading == null) {
+                  return _glassCard(child: const Column(children: [
+                    Icon(Icons.explore_off_outlined, size: 42, color: Colors.white54),
+                    SizedBox(height: 12),
+                    Text('مستشعر البوصلة غير متاح', style: TextStyle(fontWeight: FontWeight.w600)),
+                    SizedBox(height: 6),
+                    Text('تأكد من وجود مستشعر اتجاه في هاتفك، وعاير البوصلة بتحريك الهاتف على شكل رقم 8.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.6)),
+                  ]));
+                }
+                final angle = (bearing - heading) * math.pi / 180;
+                return Column(children: [
+                  Container(
+                    width: 270,
+                    height: 270,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(.045),
+                      border: Border.all(color: Colors.white.withOpacity(.22), width: 1.5),
+                      boxShadow: [BoxShadow(color: Colors.white.withOpacity(.035), blurRadius: 28, spreadRadius: 4)],
+                    ),
+                    child: Stack(alignment: Alignment.center, children: [
+                      const Positioned(top: 13, child: Text('شمال', style: TextStyle(color: Colors.white70, fontSize: 12))),
+                      const Positioned(bottom: 13, child: Text('جنوب', style: TextStyle(color: Colors.white54, fontSize: 12))),
+                      const Positioned(left: 15, child: Text('غرب', style: TextStyle(color: Colors.white54, fontSize: 12))),
+                      const Positioned(right: 15, child: Text('شرق', style: TextStyle(color: Colors.white54, fontSize: 12))),
+                      Transform.rotate(
+                        angle: angle,
+                        child: const Icon(Icons.navigation_rounded, size: 94, color: Colors.white),
+                      ),
+                    ]),
+                  ),
+                  const SizedBox(height: 20),
+                  Text('اتجاه الهاتف: ' + heading.toStringAsFixed(0) + '°', style: const TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 7),
+                  const Text('حرّك الهاتف حتى يشير السهم إلى اتجاه القبلة.', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                ]);
+              },
+            ),
           ],
         ),
       ),
