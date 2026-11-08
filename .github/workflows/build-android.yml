@@ -12,6 +12,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,9 +86,10 @@ jobs:
           }
           GRADLE
       - name: Build APK
+        timeout-minutes: 22
         run: |
           for attempt in 1 2 3; do
-            flutter build apk --release --target-platform android-arm64 && exit 0
+            flutter build apk --release --target-platform android-arm64 --verbose && exit 0
             echo "Gradle download/build attempt $attempt failed; retrying..."
             sleep 20
           done
