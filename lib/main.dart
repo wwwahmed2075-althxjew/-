@@ -1185,7 +1185,7 @@ class _QuranAudioLibraryPageState extends State<QuranAudioLibraryPage> {
     try {
       await player.setUrl(url);
       currentTitle = awwabSurahNames[selectedSurah - 1] + ' — ' + (selectedReciter?['name']?.toString() ?? 'القارئ');
-      await player.play();
+      unawaited(player.play());
     } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر تشغيل التلاوة. جرّب قارئًا أو اتصالًا آخر.')));
     } finally {
