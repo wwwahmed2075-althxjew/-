@@ -13,6 +13,8 @@ dependencies:
   shared_preferences: ^2.3.2
   mushaf_text: ^1.4.1
   adhan: ^2.0.0+1
+  flutter_local_notifications: ^19.4.2
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:
