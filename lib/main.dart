@@ -403,6 +403,12 @@ class _HomeShellState extends State<HomeShell> {
       _moreTile(Icons.calendar_month_outlined, 'التقويم الهجري والمناسبات', 'التاريخ الهجري والمناسبات الإسلامية', () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const HijriCalendarPage()));
       }),
+      _moreTile(Icons.menu_book_outlined, 'الورد القرآني اليومي', 'حدد هدفك من الصفحات وتابع إنجازك', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyWirdPage()));
+      }),
+      _moreTile(Icons.checklist_rounded, 'متابعة العبادات', 'متابعة الصلاة والنوافل والأذكار يوميًا', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const WorshipTrackerPage()));
+      }),
       const SizedBox(height: 16),
       const Text('الإعدادات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
       const SizedBox(height: 10),
@@ -1021,6 +1027,189 @@ class _RemindersPageState extends State<RemindersPage> {
             )),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class DailyWirdPage extends StatefulWidget {
+  const DailyWirdPage({super.key});
+  @override
+  State<DailyWirdPage> createState() => _DailyWirdPageState();
+}
+
+class _DailyWirdPageState extends State<DailyWirdPage> {
+  static const goals = [2, 4, 6, 10, 20];
+  int goal = 4;
+  int completed = 0;
+  String todayKey = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  String _dateKey() {
+    final now = DateTime.now();
+    return now.year.toString() + '-' + now.month.toString().padLeft(2, '0') + '-' + now.day.toString().padLeft(2, '0');
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final date = _dateKey();
+    final savedDate = prefs.getString('wird_date') ?? '';
+    if (savedDate != date) {
+      await prefs.setString('wird_date', date);
+      await prefs.setInt('wird_completed', 0);
+    }
+    if (!mounted) return;
+    setState(() {
+      todayKey = date;
+      goal = goals.contains(prefs.getInt('wird_goal')) ? prefs.getInt('wird_goal')! : 4;
+      completed = savedDate == date ? (prefs.getInt('wird_completed') ?? 0) : 0;
+    });
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('wird_date', todayKey);
+    await prefs.setInt('wird_goal', goal);
+    await prefs.setInt('wird_completed', completed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = goal == 0 ? 0.0 : (completed / goal).clamp(0.0, 1.0);
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('الورد القرآني اليومي')),
+        body: ListView(padding: const EdgeInsets.all(18), children: [
+          _glassCard(child: Column(children: [
+            const Text('هدفك اليومي من صفحات المصحف', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              value: goal,
+              dropdownColor: const Color(0xFF202020),
+              decoration: InputDecoration(filled: true, fillColor: Colors.white.withOpacity(.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none)),
+              items: goals.map((v) => DropdownMenuItem(value: v, child: Text(v.toString() + ' صفحات'))).toList(),
+              onChanged: (v) async { if (v == null) return; setState(() => goal = v); await _save(); },
+            ),
+            const SizedBox(height: 22),
+            SizedBox(width: 170, height: 170, child: Stack(alignment: Alignment.center, children: [
+              SizedBox.expand(child: CircularProgressIndicator(value: progress, strokeWidth: 10, backgroundColor: Colors.white12, valueColor: const AlwaysStoppedAnimation<Color>(Colors.white))),
+              Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(completed.toString(), style: const TextStyle(fontSize: 42, fontWeight: FontWeight.w700)),
+                Text('من ' + goal.toString() + ' صفحات', style: const TextStyle(color: Colors.white60, fontSize: 12)),
+              ]),
+            ])),
+            const SizedBox(height: 18),
+            Row(children: [
+              Expanded(child: OutlinedButton.icon(
+                onPressed: completed > 0 ? () async { setState(() => completed--); await _save(); } : null,
+                icon: const Icon(Icons.remove), label: const Text('تقليل'),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: FilledButton.icon(
+                onPressed: () async { setState(() => completed++); await _save(); },
+                icon: const Icon(Icons.add), label: const Text('أتممت صفحة'),
+                style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
+              )),
+            ]),
+            const SizedBox(height: 10),
+            Text(progress >= 1 ? 'أحسنت! أتممت وردك اليوم.' : 'باقي ' + (goal - completed).toString() + ' صفحات لإتمام هدفك.', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          ])),
+          const SizedBox(height: 12),
+          const Text('يُعاد عداد الإنجاز تلقائيًا مع بداية يوم جديد، ويظل هدف الصفحات محفوظًا.', style: TextStyle(color: Colors.white38, fontSize: 11, height: 1.6)),
+        ]),
+      ),
+    );
+  }
+}
+
+class WorshipTrackerPage extends StatefulWidget {
+  const WorshipTrackerPage({super.key});
+  @override
+  State<WorshipTrackerPage> createState() => _WorshipTrackerPageState();
+}
+
+class _WorshipTrackerPageState extends State<WorshipTrackerPage> {
+  static const items = [
+    'صلاة الفجر', 'صلاة الظهر', 'صلاة العصر', 'صلاة المغرب', 'صلاة العشاء',
+    'السنن الرواتب', 'صلاة الضحى', 'صلاة الوتر', 'أذكار الصباح', 'أذكار المساء',
+    'ورد القرآن', 'صيام تطوع',
+  ];
+  final Map<String, bool> done = {for (final item in items) item: false};
+  String date = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  String _today() {
+    final n = DateTime.now();
+    return n.year.toString() + '-' + n.month.toString().padLeft(2, '0') + '-' + n.day.toString().padLeft(2, '0');
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = _today();
+    if (!mounted) return;
+    setState(() {
+      date = today;
+      for (final item in items) {
+        done[item] = prefs.getString('worship_date') == today ? prefs.getBool('worship_$item') ?? false : false;
+      }
+    });
+    if (prefs.getString('worship_date') != today) {
+      await prefs.setString('worship_date', today);
+      for (final item in items) {
+        await prefs.setBool('worship_$item', false);
+      }
+    }
+  }
+
+  Future<void> _toggle(String item, bool value) async {
+    setState(() => done[item] = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('worship_date', date);
+    await prefs.setBool('worship_$item', value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = done.values.where((v) => v).length;
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('متابعة العبادات')),
+        body: ListView(padding: const EdgeInsets.all(18), children: [
+          _glassCard(child: Row(children: [
+            const Expanded(child: Text('إنجاز اليوم', style: TextStyle(fontWeight: FontWeight.w700))),
+            Text(count.toString() + ' / ' + items.length.toString(), style: const TextStyle(color: Colors.white70, fontFeatures: [ui.FontFeature.tabularFigures()])),
+          ])),
+          const SizedBox(height: 12),
+          ...items.map((item) => Container(
+            margin: const EdgeInsets.only(bottom: 7),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(.05), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withOpacity(.1))),
+            child: CheckboxListTile(
+              value: done[item] ?? false,
+              onChanged: (value) => _toggle(item, value ?? false),
+              activeColor: Colors.white,
+              checkColor: Colors.black,
+              title: Text(item, style: const TextStyle(fontSize: 13)),
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+            ),
+          )),
+          const SizedBox(height: 8),
+          const Text('هذه أداة متابعة شخصية وليست حكمًا على قبول العبادة، وتُصفّر القائمة تلقائيًا كل يوم.', style: TextStyle(color: Colors.white38, fontSize: 11, height: 1.6)),
+        ]),
       ),
     );
   }
