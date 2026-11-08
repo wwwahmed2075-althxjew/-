@@ -172,9 +172,9 @@ class _HomeShellState extends State<HomeShell> {
   Widget _homePage() {
     return ListView(key: const ValueKey('home'), padding: const EdgeInsets.fromLTRB(18, 16, 18, 24), children: [
       Row(children: [
-        _glassIcon(Icons.location_on_outlined, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage()))),
+        _glassIcon(Icons.location_on_outlined, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerCenterPage()))),
         const Spacer(),
-        _glassIcon(Icons.nightlight_round, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()))),
+        _glassIcon(Icons.alarm_outlined, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()))),
       ]),
       const SizedBox(height: 14),
       const Text('السَّلَامُ عَلَيْكُمْ', style: TextStyle(color: Colors.white70, fontSize: 13)),
@@ -1046,13 +1046,16 @@ class _PrayerCenterPageState extends State<PrayerCenterPage> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      city = prefs.getString('prayer_city') ?? 'الفيوم';
+      city = cities.containsKey(prefs.getString('prayer_city')) ? prefs.getString('prayer_city')! : 'الفيوم';
       beforeMinutes = prefs.getInt('prayer_before_minutes') ?? 10;
       notificationsEnabled = prefs.getBool('prayer_notifications_enabled') ?? false;
       for (final name in prayerNames) {
         enabled[name] = prefs.getBool('prayer_enabled_$name') ?? true;
       }
     });
+    if (notificationsEnabled) {
+      await _persistAndSchedule();
+    }
   }
 
   Future<void> _persistAndSchedule() async {
