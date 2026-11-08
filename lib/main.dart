@@ -173,7 +173,14 @@ class _HomeShellState extends State<HomeShell> {
                 ],
               ),
             ),
-            _glassIcon(Icons.notifications_none_rounded),
+            _glassIcon(Icons.notifications_none_rounded, onTap: () {
+              showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
+                backgroundColor: const Color(0xFF202020),
+                title: const Text('الإشعارات'),
+                content: const Text('لا توجد إشعارات جديدة حاليًا.'),
+                actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('حسنًا'))],
+              ));
+            }),
           ],
         ),
         const SizedBox(height: 26),
@@ -200,10 +207,17 @@ class _HomeShellState extends State<HomeShell> {
           crossAxisSpacing: 10,
           childAspectRatio: 1.55,
           children: [
-            _feature(Icons.menu_book_rounded, 'القرآن الكريم', 'تلاوة وورد'),
-            _feature(Icons.favorite_border_rounded, 'الأذكار', 'حصنك اليومي'),
-            _feature(Icons.radio_button_checked_rounded, 'السبحة', 'اذكر الله'),
-            _feature(Icons.mosque_rounded, 'الصلاة', 'المواقيت والأذان'),
+            _feature(Icons.menu_book_rounded, 'القرآن الكريم', 'تلاوة وورد', onTap: () => setState(() => selectedTab = 1)),
+            _feature(Icons.favorite_border_rounded, 'الأذكار', 'حصنك اليومي', onTap: () => setState(() => selectedTab = 2)),
+            _feature(Icons.radio_button_checked_rounded, 'السبحة', 'اذكر الله', onTap: () => setState(() => selectedTab = 3)),
+            _feature(Icons.mosque_rounded, 'الصلاة', 'المواقيت والأذان', onTap: () {
+              showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
+                backgroundColor: const Color(0xFF202020),
+                title: const Text('مواقيت الصلاة'),
+                content: const Text('ميزة مواقيت الصلاة والأذان لم تُفعّل بعد. لن نعرض مواعيد غير محسوبة أو غير موثوقة.'),
+                actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('حسنًا'))],
+              ));
+            }),
           ],
         ),
         const SizedBox(height: 20),
@@ -411,37 +425,45 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  Widget _glassIcon(IconData icon) {
-    return Container(
-      width: 43,
-      height: 43,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(.06),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(.13)),
+  Widget _glassIcon(IconData icon, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 43,
+        height: 43,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(.06),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(.13)),
+        ),
+        child: Icon(icon, color: Colors.white70),
       ),
-      child: Icon(icon, color: Colors.white70),
     );
   }
 
-  Widget _feature(IconData icon, String title, String subtitle) {
-    return _glassCard(
-      child: Row(
-        children: [
-          Icon(icon, size: 23, color: Colors.white70),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.white54)),
-              ],
+  Widget _feature(IconData icon, String title, String subtitle, {required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: _glassCard(
+        child: Row(
+          children: [
+            Icon(icon, size: 23, color: Colors.white70),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.white54)),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
