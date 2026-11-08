@@ -402,13 +402,86 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Widget _settingsPage() {
-    return ListView(key: const ValueKey('settings'), padding: const EdgeInsets.all(20), children: [
-      const Text('الإعدادات', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 8), const Text('خصص تجربة آواب', style: TextStyle(color: Colors.white54)), const SizedBox(height: 20),
-      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('حجم الخط', style: TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 8), Text('معاينة النص', style: TextStyle(fontSize: 15 * textScale)), Slider(value: textScale, min: 0.85, max: 1.25, divisions: 8, activeColor: Colors.white, onChanged: (v) async { setState(() => textScale = v); final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', v); })])),
-      const SizedBox(height: 12), _glassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('المظهر', style: TextStyle(fontWeight: FontWeight.w600)), SizedBox(height: 8), Text('أسود زجاجي — هوية أحادية اللون بالأسود والأبيض', style: TextStyle(color: Colors.white60, fontSize: 12))])),
-      const SizedBox(height: 12), _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('البيانات', style: TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 8), const Text('عداد السبحة وتقدم الأذكار محفوظان على جهازك.', style: TextStyle(color: Colors.white60, fontSize: 12)), TextButton.icon(onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', 1.0); if (!mounted) return; setState(() => textScale = 1.0); }, icon: const Icon(Icons.restart_alt_rounded), label: const Text('إعادة ضبط حجم الخط'))]))
+    return ListView(key: const ValueKey('more'), padding: const EdgeInsets.all(20), children: [
+      const Text('المزيد', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 8),
+      const Text('أدواتك ومحتواك الإسلامي', style: TextStyle(color: Colors.white54)),
+      const SizedBox(height: 18),
+      _moreTile(Icons.shield_moon_outlined, 'الرقية الشرعية', 'آية الكرسي والإخلاص والفلق والناس', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const RuqyahPage()));
+      }),
+      _moreTile(Icons.auto_awesome_outlined, 'فضل القرآن والذكر', 'آيات وأحاديث في فضل التلاوة والذكر', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const AwwabInfoPage(
+          title: 'فضل القرآن والذكر',
+          sections: [
+            ['فضل الذكر', 'قال الله تعالى: ﴿يَا أَيُّهَا الَّذِينَ آمَنُوا اذْكُرُوا اللَّهَ ذِكْرًا كَثِيرًا ۝ وَسَبِّحُوهُ بُكْرَةً وَأَصِيلًا﴾ — الأحزاب: 41-42.'],
+            ['فضل القرآن', 'قال رسول الله ﷺ: «خيركم من تعلم القرآن وعلمه» — صحيح البخاري، حديث 5027.'],
+            ['حياة القلب', 'قال رسول الله ﷺ: «مثل الذي يذكر ربه والذي لا يذكر ربه مثل الحي والميت» — صحيح البخاري، حديث 6407.'],
+          ],
+        )));
+      }),
+      _moreTile(Icons.nightlight_round, 'قيام الليل وصلاة الضحى', 'تعريف وفضل وأوقات العبادة', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const AwwabInfoPage(
+          title: 'قيام الليل وصلاة الضحى',
+          sections: [
+            ['قيام الليل', 'قال الله تعالى: ﴿وَمِنَ اللَّيْلِ فَتَهَجَّدْ بِهِ نَافِلَةً لَكَ﴾ — الإسراء: 79. يبدأ وقته بعد صلاة العشاء وينتهي بطلوع الفجر.'],
+            ['الثلث الأخير', 'ينبغي تحري الثلث الأخير من الليل بحسب وقتي المغرب والفجر في مدينتك.'],
+            ['صلاة الضحى', 'وقتها بعد ارتفاع الشمس إلى قبيل الزوال، وأقلها ركعتان. ورد فضلها في صحيح مسلم، حديث 720.'],
+          ],
+        )));
+      }),
+      _moreTile(Icons.event_available_outlined, 'متابعة التذكيرات', 'متابعة صيام الاثنين والخميس والصلاة على النبي ﷺ', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()));
+      }),
+      const SizedBox(height: 16),
+      const Text('الإعدادات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 10),
+      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('حجم الخط', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Text('معاينة النص', style: TextStyle(fontSize: 15 * textScale)),
+        Slider(value: textScale, min: 0.85, max: 1.25, divisions: 8, activeColor: Colors.white, onChanged: (v) async { setState(() => textScale = v); final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', v); }),
+      ])),
+      const SizedBox(height: 12),
+      _glassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('المظهر', style: TextStyle(fontWeight: FontWeight.w600)),
+        SizedBox(height: 8),
+        Text('أسود زجاجي — الهوية المعتمدة بالأسود والأبيض', style: TextStyle(color: Colors.white60, fontSize: 12)),
+      ])),
+      const SizedBox(height: 12),
+      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('اللغة', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        const Text('الواجهة العربية هي اللغة الحالية. دعم الترجمة الكاملة للإنجليزية والفرنسية ما زال ضمن متطلبات الإصدار.', style: TextStyle(color: Colors.white60, fontSize: 12)),
+      ])),
+      const SizedBox(height: 12),
+      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('البيانات', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        const Text('عداد السبحة وتقدم الأذكار محفوظان على جهازك.', style: TextStyle(color: Colors.white60, fontSize: 12)),
+        TextButton.icon(onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', 1.0); if (!mounted) return; setState(() => textScale = 1.0); }, icon: const Icon(Icons.restart_alt_rounded), label: const Text('إعادة ضبط حجم الخط')),
+      ])),
     ]);
+  }
+
+  Widget _moreTile(IconData icon, String title, String subtitle, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: _glassCard(child: Row(children: [
+          Icon(icon, color: Colors.white70, size: 23),
+          const SizedBox(width: 13),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          ])),
+          const Icon(Icons.chevron_left_rounded, color: Colors.white54),
+        ])),
+      ),
+    );
   }
 
   Widget _glassCard({required Widget child}) {
@@ -657,6 +730,156 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+
+class RuqyahPage extends StatelessWidget {
+  const RuqyahPage({super.key});
+
+  Future<List<String>> _loadRuqyah() async {
+    final kursi = await QuranService.getAyah(2, 255);
+    final ikhlas = await QuranService.getSurah(112);
+    final falaq = await QuranService.getSurah(113);
+    final nas = await QuranService.getSurah(114);
+    return [
+      'آية الكرسي — البقرة: 255\n${kursi.text}',
+      'سورة الإخلاص\n${ikhlas.ayat.map((a) => a.text).join(' ۝ ')}',
+      'سورة الفلق\n${falaq.ayat.map((a) => a.text).join(' ۝ ')}',
+      'سورة الناس\n${nas.ayat.map((a) => a.text).join(' ۝ ')}',
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('الرقية الشرعية')),
+        body: FutureBuilder<List<String>>(
+          future: _loadRuqyah(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Colors.white));
+            if (snapshot.hasError || !snapshot.hasData) return const Center(child: Text('تعذر تحميل نص الرقية من المصحف المحلي.'));
+            return ListView(
+              padding: const EdgeInsets.all(18),
+              children: [
+                const Text('اقرأ الآيات بتدبر ويقين، والشفاء من الله وحده.', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                const SizedBox(height: 12),
+                ...snapshot.data!.map((text) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(.055), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(.12))),
+                  child: SelectableText(text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 21, height: 2, color: Colors.white)),
+                )),
+                const Text('نص الآيات من بيانات المصحف المنسوبة إلى مشروع Tanzil.', style: TextStyle(color: Colors.white38, fontSize: 10)),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class AwwabInfoPage extends StatelessWidget {
+  final String title;
+  final List<List<String>> sections;
+  const AwwabInfoPage({super.key, required this.title, required this.sections});
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: Text(title)),
+        body: ListView(
+          padding: const EdgeInsets.all(18),
+          children: sections.map((section) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(.055), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(.12))),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(section[0], style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              const SizedBox(height: 10),
+              Text(section[1], style: const TextStyle(color: Colors.white80, height: 1.8, fontSize: 15)),
+            ]),
+          )).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class RemindersPage extends StatefulWidget {
+  const RemindersPage({super.key});
+  @override
+  State<RemindersPage> createState() => _RemindersPageState();
+}
+
+class _RemindersPageState extends State<RemindersPage> {
+  final Map<String, bool> values = {
+    'صيام يوم الاثنين': false,
+    'صيام يوم الخميس': false,
+    'الصلاة على النبي ﷺ': false,
+    'قيام الليل': false,
+    'صلاة الضحى': false,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      for (final key in values.keys) {
+        values[key] = prefs.getBool('reminder_check_$key') ?? false;
+      }
+    });
+  }
+
+  Future<void> _toggle(String key, bool value) async {
+    setState(() => values[key] = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('reminder_check_$key', value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('متابعة التذكيرات')),
+        body: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            const Text('علّم ما أنجزته؛ تُحفظ المتابعة على جهازك. هذه قائمة متابعة وليست إشعارات تلقائية بعد.', style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.6)),
+            const SizedBox(height: 14),
+            ...values.keys.map((key) => Container(
+              margin: const EdgeInsets.only(bottom: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(.055), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(.1))),
+              child: CheckboxListTile(
+                value: values[key],
+                onChanged: (value) => _toggle(key, value ?? false),
+                activeColor: Colors.white,
+                checkColor: Colors.black,
+                title: Text(key, style: const TextStyle(fontSize: 13)),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+              ),
+            )),
+          ],
         ),
       ),
     );
