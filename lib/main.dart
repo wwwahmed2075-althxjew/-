@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +45,7 @@ class _HomeShellState extends State<HomeShell> {
   int tasbeehCount = 0;
   String azkarCategory = awwabAzkar.keys.first;
   final Map<String, int> azkarProgress = {};
+  double textScale = 1.0;
 
   @override
   void initState() {
@@ -56,6 +58,7 @@ class _HomeShellState extends State<HomeShell> {
     if (!mounted) return;
     setState(() {
       tasbeehCount = prefs.getInt('tasbeeh_count') ?? 0;
+      textScale = prefs.getDouble('text_scale') ?? 1.0;
       for (final category in awwabAzkar.keys) {
         final items = awwabAzkar[category]!;
         for (var i = 0; i < items.length; i++) {
@@ -85,16 +88,16 @@ class _HomeShellState extends State<HomeShell> {
       _quranPage(),
       _azkarPage(),
       _tasbeehPage(),
-      _simplePage('الإعدادات', 'اللغة والمظهر وحجم الخط والتنبيهات'),
+      _settingsPage(),
     ];
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         body: SafeArea(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: pages[selectedTab],
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: pages[selectedTab]),
           ),
         ),
         bottomNavigationBar: SafeArea(
@@ -393,6 +396,16 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
+  Widget _settingsPage() {
+    return ListView(key: const ValueKey('settings'), padding: const EdgeInsets.all(20), children: [
+      const Text('الإعدادات', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 8), const Text('خصص تجربة آواب', style: TextStyle(color: Colors.white54)), const SizedBox(height: 20),
+      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('حجم الخط', style: TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 8), Text('معاينة النص', style: TextStyle(fontSize: 15 * textScale)), Slider(value: textScale, min: 0.85, max: 1.25, divisions: 8, activeColor: Colors.white, onChanged: (v) async { setState(() => textScale = v); final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', v); })])),
+      const SizedBox(height: 12), _glassCard(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('المظهر', style: TextStyle(fontWeight: FontWeight.w600)), SizedBox(height: 8), Text('أسود زجاجي — هوية أحادية اللون بالأسود والأبيض', style: TextStyle(color: Colors.white60, fontSize: 12))])),
+      const SizedBox(height: 12), _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('البيانات', style: TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 8), const Text('عداد السبحة وتقدم الأذكار محفوظان على جهازك.', style: TextStyle(color: Colors.white60, fontSize: 12)), TextButton.icon(onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', 1.0); if (!mounted) return; setState(() => textScale = 1.0); }, icon: const Icon(Icons.restart_alt_rounded), label: const Text('إعادة ضبط حجم الخط'))]))
+    ]);
+  }
+
   Widget _simplePage(String title, String subtitle) {
     return Center(
       key: ValueKey(title),
@@ -414,15 +427,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Widget _glassCard({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(19),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(.055),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(.12)),
-      ),
-      child: child,
-    );
+    return ClipRRect(borderRadius: BorderRadius.circular(22), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18), child: Container(padding: const EdgeInsets.all(19), decoration: BoxDecoration(color: Colors.white.withOpacity(.065), borderRadius: BorderRadius.circular(22), border: Border.all(color: Colors.white.withOpacity(.16), width: .8)), child: child)));
   }
 
   Widget _glassIcon(IconData icon, {VoidCallback? onTap}) {
