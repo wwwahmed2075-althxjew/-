@@ -368,6 +368,9 @@ class _HomeShellState extends State<HomeShell> {
       const SizedBox(height: 8),
       const Text('أدواتك ومحتواك الإسلامي', style: TextStyle(color: Colors.white54)),
       const SizedBox(height: 18),
+      _moreTile(Icons.auto_awesome_outlined, 'أسماء الله الحسنى', 'الأسماء ومعانيها المختصرة مع البحث', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmaUlHusnaPage()));
+      }),
       _moreTile(Icons.shield_moon_outlined, 'الرقية الشرعية', 'آية الكرسي والإخلاص والفلق والناس', () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const RuqyahPage()));
       }),
@@ -947,6 +950,77 @@ class RuqyahPage extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+
+class AsmaUlHusnaPage extends StatefulWidget {
+  const AsmaUlHusnaPage({super.key});
+  @override
+  State<AsmaUlHusnaPage> createState() => _AsmaUlHusnaPageState();
+}
+
+class _AsmaUlHusnaPageState extends State<AsmaUlHusnaPage> {
+  String query = '';
+  static const names = <List<String>>[
+    ['الرَّحْمَن', 'واسع الرحمة لجميع خلقه'], ['الرَّحِيم', 'كثير الرحمة بالمؤمنين'], ['الْمَلِك', 'المالك المتصرف في خلقه'], ['الْقُدُّوس', 'المنزه عن كل نقص'], ['السَّلَام', 'السالم من كل عيب ونقص'], ['الْمُؤْمِن', 'الذي يؤمّن عباده ويصدق رسله'], ['الْمُهَيْمِن', 'الرقيب الحافظ'], ['الْعَزِيز', 'الغالب الذي لا يُغلب'], ['الْجَبَّار', 'العلي القاهر وجابر الكسير'], ['الْمُتَكَبِّر', 'المتعالي عن صفات الخلق'],
+    ['الْخَالِق', 'المقدّر والموجد للأشياء'], ['الْبَارِئ', 'الذي أوجد الخلق'], ['الْمُصَوِّر', 'الذي أعطى كل شيء صورته'], ['الْغَفَّار', 'كثير المغفرة'], ['الْقَهَّار', 'الغالب لكل شيء'], ['الْوَهَّاب', 'كثير العطاء'], ['الرَّزَّاق', 'المتكفل بأرزاق خلقه'], ['الْفَتَّاح', 'الذي يفتح أبواب الرحمة والخير'], ['الْعَلِيم', 'المحيط علمه بكل شيء'], ['الْقَابِض', 'يقبض بحكمته'],
+    ['الْبَاسِط', 'يبسط فضله ورزقه'], ['الْخَافِض', 'يخفض من شاء بحكمته'], ['الرَّافِع', 'يرفع من شاء بفضله'], ['الْمُعِزّ', 'يهب العزة لمن شاء'], ['الْمُذِلّ', 'يذل من شاء بعدله'], ['السَّمِيع', 'الذي يسمع كل شيء'], ['الْبَصِير', 'الذي يرى كل شيء'], ['الْحَكَم', 'الحاكم بالحق'], ['الْعَدْل', 'المنزه عن الظلم'], ['اللَّطِيف', 'الرفيق بعباده العالم بدقائق الأمور'],
+    ['الْخَبِير', 'العالم ببواطن الأمور'], ['الْحَلِيم', 'لا يعاجل العصاة بالعقوبة'], ['الْعَظِيم', 'ذو العظمة والكبرياء'], ['الْغَفُور', 'واسع المغفرة'], ['الشَّكُور', 'يجزي على العمل القليل الكثير'], ['الْعَلِيّ', 'المتعالي فوق خلقه'], ['الْكَبِير', 'العظيم الذي كل شيء دونه'], ['الْحَفِيظ', 'الحافظ لكل شيء'], ['الْمُقِيت', 'الموصل أقوات الخلق'], ['الْحَسِيب', 'الكافي والمحاسب لعباده'],
+    ['الْجَلِيل', 'المتصف بصفات العظمة'], ['الْكَرِيم', 'كثير الخير والعطاء'], ['الرَّقِيب', 'المطلع على أعمال عباده'], ['الْمُجِيب', 'الذي يجيب دعاء الداعين'], ['الْوَاسِع', 'الذي وسع علمه ورحمته كل شيء'], ['الْحَكِيم', 'الذي يضع الأمور مواضعها'], ['الْوَدُود', 'المحب لأوليائه'], ['الْمَجِيد', 'العظيم واسع الكرم والشرف'], ['الْبَاعِث', 'يبعث الخلق بعد الموت'], ['الشَّهِيد', 'المطلع على كل شيء'],
+    ['الْحَقّ', 'الثابت الذي لا شك فيه'], ['الْوَكِيل', 'الكفيل بأمور عباده'], ['الْقَوِيّ', 'كامل القوة'], ['الْمَتِين', 'شديد القوة'], ['الْوَلِيّ', 'ناصر المؤمنين ومتولي أمورهم'], ['الْحَمِيد', 'المستحق للحمد كله'], ['الْمُحْصِي', 'الذي أحاط بكل شيء عددًا'], ['الْمُبْدِئ', 'الذي بدأ الخلق'], ['الْمُعِيد', 'الذي يعيد الخلق بعد الموت'], ['الْمُحْيِي', 'واهب الحياة'],
+    ['الْمُمِيت', 'مقدر الموت على خلقه'], ['الْحَيّ', 'كامل الحياة التي لا تزول'], ['الْقَيُّوم', 'القائم بنفسه المقيم لغيره'], ['الْوَاجِد', 'الغني الذي لا يعوزه شيء'], ['الْمَاجِد', 'كامل المجد والشرف'], ['الْوَاحِد', 'المتفرد الذي لا شريك له'], ['الصَّمَد', 'المقصود في الحوائج'], ['الْقَادِر', 'تام القدرة'], ['الْمُقْتَدِر', 'كامل الاقتدار'], ['الْمُقَدِّم', 'يقدم من شاء بحكمته'],
+    ['الْمُؤَخِّر', 'يؤخر من شاء بحكمته'], ['الأَوَّل', 'ليس قبله شيء'], ['الآخِر', 'ليس بعده شيء'], ['الظَّاهِر', 'العالي فوق خلقه'], ['الْبَاطِن', 'المحيط علمه بكل شيء'], ['الْوَالِي', 'المتولي تدبير الخلق'], ['الْمُتَعَالِي', 'المتنزه عن صفات النقص'], ['الْبَرّ', 'كثير الإحسان'], ['التَّوَّاب', 'يوفق للتوبة ويقبلها'], ['الْمُنْتَقِم', 'يعاقب من يستحق بعدله'],
+    ['الْعَفُوّ', 'يمحو الذنوب ويتجاوز عنها'], ['الرَّؤُوف', 'شديد الرحمة بعباده'], ['مَالِكُ الْمُلْك', 'صاحب الملك كله'], ['ذُو الْجَلَالِ وَالإِكْرَام', 'صاحب العظمة والإحسان'], ['الْمُقْسِط', 'العادل في حكمه'], ['الْجَامِع', 'يجمع الخلائق ليوم الحساب'], ['الْغَنِيّ', 'المستغني عن كل ما سواه'], ['الْمُغْنِي', 'يغني من يشاء من عباده'], ['الْمَانِع', 'يمنع بحكمته'], ['الضَّارّ', 'لا يقع ضر إلا بإذنه وحكمته'],
+    ['النَّافِع', 'بيده النفع والخير'], ['النُّور', 'منوّر السماوات والأرض'], ['الْهَادِي', 'يهدي من يشاء إلى صراطه'], ['الْبَدِيع', 'موجد الخلق على غير مثال سابق'], ['الْبَاقِي', 'الدائم الذي لا يفنى'], ['الْوَارِث', 'الباقي بعد فناء الخلق'], ['الرَّشِيد', 'الذي أرشد الخلق إلى مصالحهم'], ['الصَّبُور', 'لا يعجل بالعقوبة']
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = names.where((item) => item[0].contains(query) || item[1].contains(query)).toList();
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('أسماء الله الحسنى')),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const Text('﴿وَلِلَّهِ الْأَسْمَاءُ الْحُسْنَىٰ فَادْعُوهُ بِهَا﴾', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 17, height: 1.8)),
+            const SizedBox(height: 12),
+            TextField(
+              textDirection: TextDirection.rtl,
+              onChanged: (value) => setState(() => query = value.trim()),
+              decoration: InputDecoration(
+                hintText: 'ابحث عن اسم أو معنى',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white.withOpacity(.06),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(.12))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(.12))),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('\${filtered.length} من \${names.length} اسمًا', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+            const SizedBox(height: 8),
+            ...filtered.map((entry) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(.055), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white.withOpacity(.10))),
+              child: Row(children: [
+                const Icon(Icons.auto_awesome, color: Colors.white54, size: 17),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(entry[0], style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  Text(entry[1], style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                ])),
+              ]),
+            )),
+          ],
         ),
       ),
     );
