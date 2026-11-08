@@ -1215,6 +1215,24 @@ class _WorshipTrackerPageState extends State<WorshipTrackerPage> {
   }
 }
 
+Widget awwabGlassCard({required Widget child}) {
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(22),
+    child: BackdropFilter(
+      filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+      child: Container(
+        padding: const EdgeInsets.all(19),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(.065),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white.withOpacity(.16), width: .8),
+        ),
+        child: child,
+      ),
+    ),
+  );
+}
+
 class HijriCalendarPage extends StatelessWidget {
   const HijriCalendarPage({super.key});
 
@@ -1245,7 +1263,7 @@ class HijriCalendarPage extends StatelessWidget {
         body: ListView(
           padding: const EdgeInsets.all(18),
           children: [
-            _glassCard(child: Column(children: [
+            awwabGlassCard(child: Column(children: [
               const Icon(Icons.nightlight_round, size: 34, color: Colors.white70),
               const SizedBox(height: 12),
               Text(today.getDayName() + ' ' + today.hDay.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
@@ -1313,7 +1331,7 @@ class _QiblaPageState extends State<QiblaPage> {
         body: ListView(
           padding: const EdgeInsets.all(22),
           children: [
-            _glassCard(child: Column(children: [
+            awwabGlassCard(child: Column(children: [
               const Text('اختر مدينتك لحساب اتجاه القبلة', style: TextStyle(color: Colors.white70, fontSize: 12)),
               const SizedBox(height: 8),
               DropdownButton<String>(
@@ -1332,7 +1350,7 @@ class _QiblaPageState extends State<QiblaPage> {
               builder: (context, snapshot) {
                 final heading = snapshot.data?.heading;
                 if (heading == null) {
-                  return _glassCard(child: const Column(children: [
+                  return awwabGlassCard(child: const Column(children: [
                     Icon(Icons.explore_off_outlined, size: 42, color: Colors.white54),
                     SizedBox(height: 12),
                     Text('مستشعر البوصلة غير متاح', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -1484,7 +1502,7 @@ class _PrayerCenterPageState extends State<PrayerCenterPage> {
         body: ListView(
           padding: const EdgeInsets.all(18),
           children: [
-            _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Text('المدينة', style: TextStyle(color: Colors.white70, fontSize: 12)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
@@ -1511,7 +1529,7 @@ class _PrayerCenterPageState extends State<PrayerCenterPage> {
               )),
             ])),
             const SizedBox(height: 14),
-            _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: notificationsEnabled,
