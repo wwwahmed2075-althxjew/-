@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: awwab-android-build
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,9 +25,11 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Generate Gradle wrapper outside Android project
+      - name: Generate Gradle wrapper
         run: |
           mkdir -p "$RUNNER_TEMP/gradle-wrapper-project"
+          printf "rootProject.name = 'wrapper-generator'\n" > "$RUNNER_TEMP/gradle-wrapper-project/settings.gradle"
+          printf "plugins { id 'base' }\n" > "$RUNNER_TEMP/gradle-wrapper-project/build.gradle"
           gradle -p "$RUNNER_TEMP/gradle-wrapper-project" wrapper --gradle-version 8.13
           mkdir -p android/gradle/wrapper
           cp "$RUNNER_TEMP/gradle-wrapper-project/gradlew" android/gradlew
