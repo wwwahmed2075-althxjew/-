@@ -45,9 +45,6 @@ class PrayerNotificationService {
     await initialize();
     await cancelPrayerAlerts();
     const names = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
-    const prayers = <String, int>{
-      'الفجر': 0, 'الظهر': 1, 'العصر': 2, 'المغرب': 3, 'العشاء': 4,
-    };
     final coordinates = adhan.Coordinates(latitude, longitude);
     final params = adhan.CalculationMethod.egyptian.getParameters();
     params.madhab = adhan.Madhab.shafi;
