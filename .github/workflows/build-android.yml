@@ -26,7 +26,7 @@ jobs:
           printf "flutter.sdk=%s\n" "$FLUTTER_ROOT" > android/local.properties
           printf "sdk.dir=%s\n" "$ANDROID_HOME" >> android/local.properties
           cd android
-          gradle wrapper --gradle-version 8.7
+          gradle wrapper --gradle-version 8.13
       - name: Install dependencies
         run: flutter pub get
       - name: Analyze
