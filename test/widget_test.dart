@@ -9,7 +9,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const AwwabApp());
     await tester.pumpAndSettle();
-    expect(find.text('أهلًا بك في آواب'), findsOneWidget);
+    expect(find.text('السَّلَامُ عَلَيْكُمْ'), findsOneWidget);
     expect(find.text('الرئيسية'), findsOneWidget);
   });
 }
