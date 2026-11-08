@@ -1072,9 +1072,12 @@ class _PrayerCenterPageState extends State<PrayerCenterPage> {
     }
     final granted = await PrayerNotificationService.instance.requestPermissions();
     if (!granted) {
+      notificationsEnabled = false;
+      await prefs.setBool('prayer_notifications_enabled', false);
       if (mounted) {
+        setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('اسمح للتطبيق بالإشعارات من إعدادات الهاتف لتفعيل التنبيهات.')),
+          const SnackBar(content: Text('لم يتم منح إذن الإشعارات؛ يمكنك تفعيله من إعدادات الهاتف ثم المحاولة مجددًا.')),
         );
       }
       return;
