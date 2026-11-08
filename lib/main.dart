@@ -189,17 +189,6 @@ class _HomeShellState extends State<HomeShell> {
       const Text('مواقيت الصلاة', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
       const SizedBox(height: 10),
       const HomePrayerSummary(),
-      const SizedBox(height: 20),
-      const Text('اختصاراتك', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-      const SizedBox(height: 11),
-      GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.7, children: [
-        _feature(Icons.menu_book_rounded, 'القرآن الكريم', 'المصحف والقراءة', onTap: () => setState(() => selectedTab = 1)),
-        _feature(Icons.auto_awesome_rounded, 'الأذكار', 'الصباح والمساء', onTap: () => setState(() => selectedTab = 2)),
-        _feature(Icons.radio_button_checked_rounded, 'السبحة', 'عداد الذكر', onTap: () => setState(() => selectedTab = 3)),
-        _feature(Icons.mosque_outlined, 'مواقيت الصلاة', 'الصلاة القادمة', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesPage()))),
-        _feature(Icons.shield_moon_outlined, 'الرقية الشرعية', 'آيات وأدعية', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RuqyahPage()))),
-        _feature(Icons.notifications_active_outlined, 'التذكيرات', 'مواعيد وأوراد', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RemindersPage()))),
-      ]),
     ]);
   }
 
@@ -642,19 +631,27 @@ class _HomePrayerSummaryState extends State<HomePrayerSummary> {
               ]),
             ]),
             const SizedBox(height: 12),
-            Wrap(spacing: 7, runSpacing: 7, children: rows.map((row) {
+            const Divider(color: Colors.white24, height: 22),
+            ...rows.map((row) {
               final targetTime = row.value.isAfter(now) ? row.value : row.value.add(const Duration(days: 1));
+              final isNext = row.key == upcoming.key;
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-                decoration: BoxDecoration(color: row.key == upcoming.key ? Colors.white.withOpacity(.16) : Colors.white.withOpacity(.045), borderRadius: BorderRadius.circular(11), border: Border.all(color: Colors.white.withOpacity(.1))),
-                child: Column(children: [
-                  Text(row.key, style: const TextStyle(fontSize: 10, color: Colors.white70)),
-                  const SizedBox(height: 3),
-                  Text(_time(row.value), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
-                  Text(_left(targetTime), style: const TextStyle(fontSize: 9, color: Colors.white54, fontFeatures: [ui.FontFeature.tabularFigures()])),
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isNext ? Colors.white.withOpacity(.13) : Colors.white.withOpacity(.035),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(isNext ? .22 : .07)),
+                ),
+                child: Row(children: [
+                  SizedBox(width: 88, child: Text(row.key, style: TextStyle(fontSize: 12, color: isNext ? Colors.white : Colors.white70, fontWeight: isNext ? FontWeight.w700 : FontWeight.w500))),
+                  Text(_time(row.value), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFeatures: [ui.FontFeature.tabularFigures()])),
+                  const Spacer(),
+                  Text(row.key == 'الشروق' ? 'شروق الشمس' : row.key == 'قيام الليل' ? 'بداية الثلث الأخير' : 'متبقي ' + _left(targetTime),
+                    style: const TextStyle(fontSize: 10, color: Colors.white54, fontFeatures: [ui.FontFeature.tabularFigures()])),
                 ]),
               );
-            }).toList()),
+            }),
           ]),
         ),
       ),
@@ -694,16 +691,6 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
     await prefs.setInt('last_quran_page', page);
     if (!mounted) return;
     setState(() => currentPage = page);
-  }
-
-  Future<void> _saveAyah(int ayahId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('last_quran_ayah', ayahId);
-    await prefs.setInt('last_quran_page', currentPage);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تم حفظ موضع الآية'), duration: Duration(milliseconds: 900)),
-    );
   }
 
   Future<void> _addBookmark() async {
@@ -769,7 +756,6 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
                         colors: colors,
                         tajweed: tajweed,
                         maxFontSize: fontSize,
-                        onAyahTap: _saveAyah,
                       ),
                     ),
                   ),
