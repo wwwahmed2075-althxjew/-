@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:quran_data_dart/quran.dart';
 import 'package:adhan/adhan.dart' as adhan;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -129,11 +130,11 @@ class _HomeShellState extends State<HomeShell> {
                   children: List.generate(tabs.length, (index) {
                     final active = selectedTab == index;
                     final icons = [
-                      Icons.home_rounded,
-                      Icons.menu_book_rounded,
-                      Icons.auto_awesome_rounded,
-                      Icons.radio_button_checked_rounded,
-                      Icons.grid_view_rounded,
+                      CupertinoIcons.house_fill,
+                      CupertinoIcons.book_fill,
+                      CupertinoIcons.sparkles,
+                      CupertinoIcons.circle,
+                      CupertinoIcons.ellipsis,
                     ];
                     return InkWell(
                       borderRadius: BorderRadius.circular(18),
