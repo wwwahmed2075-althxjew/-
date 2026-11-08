@@ -914,18 +914,24 @@ class RuqyahPage extends StatelessWidget {
   const RuqyahPage({super.key});
 
   Future<List<String>> _loadRuqyah() async {
+    final fatiha = await Quran.surahAyahs(1);
     final kursi = await Quran.ayah(2, 255);
+    final lastBaqara1 = await Quran.ayah(2, 285);
+    final lastBaqara2 = await Quran.ayah(2, 286);
     final ikhlas = await Quran.surahAyahs(112);
     final falaq = await Quran.surahAyahs(113);
     final nas = await Quran.surahAyahs(114);
     return [
-      'آية الكرسي — البقرة: 255\\n${kursi?.text ?? ''}',
-      'سورة الإخلاص\\n${ikhlas.map((a) => a.text).join(' ۝ ')}',
-      'سورة الفلق\\n${falaq.map((a) => a.text).join(' ۝ ')}',
-      'سورة الناس\\n${nas.map((a) => a.text).join(' ۝ ')}',
+      'سورة الفاتحة\n${fatiha.map((a) => a.text).join(' ۝ ')}',
+      'آية الكرسي — البقرة: 255\n${kursi?.text ?? ''}',
+      'آخر آيتين من سورة البقرة\n${lastBaqara1?.text ?? ''} ۝ ${lastBaqara2?.text ?? ''}',
+      'سورة الإخلاص\n${ikhlas.map((a) => a.text).join(' ۝ ')}',
+      'سورة الفلق\n${falaq.map((a) => a.text).join(' ۝ ')}',
+      'سورة الناس\n${nas.map((a) => a.text).join(' ۝ ')}',
+      'دعاء الرقية: أذهب البأس رب الناس، واشف أنت الشافي، لا شفاء إلا شفاؤك، شفاءً لا يغادر سقمًا.',
+      'دعاء التحصين: أعوذ بكلمات الله التامات من شر ما خلق.',
     ];
   }
-
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -977,7 +983,7 @@ class _AsmaUlHusnaPageState extends State<AsmaUlHusnaPage> {
     ['الْحَقّ', 'الثابت الذي لا شك فيه'], ['الْوَكِيل', 'الكفيل بأمور عباده'], ['الْقَوِيّ', 'كامل القوة'], ['الْمَتِين', 'شديد القوة'], ['الْوَلِيّ', 'ناصر المؤمنين ومتولي أمورهم'], ['الْحَمِيد', 'المستحق للحمد كله'], ['الْمُحْصِي', 'الذي أحاط بكل شيء عددًا'], ['الْمُبْدِئ', 'الذي بدأ الخلق'], ['الْمُعِيد', 'الذي يعيد الخلق بعد الموت'], ['الْمُحْيِي', 'واهب الحياة'],
     ['الْمُمِيت', 'مقدر الموت على خلقه'], ['الْحَيّ', 'كامل الحياة التي لا تزول'], ['الْقَيُّوم', 'القائم بنفسه المقيم لغيره'], ['الْوَاجِد', 'الغني الذي لا يعوزه شيء'], ['الْمَاجِد', 'كامل المجد والشرف'], ['الْوَاحِد', 'المتفرد الذي لا شريك له'], ['الصَّمَد', 'المقصود في الحوائج'], ['الْقَادِر', 'تام القدرة'], ['الْمُقْتَدِر', 'كامل الاقتدار'], ['الْمُقَدِّم', 'يقدم من شاء بحكمته'],
     ['الْمُؤَخِّر', 'يؤخر من شاء بحكمته'], ['الأَوَّل', 'ليس قبله شيء'], ['الآخِر', 'ليس بعده شيء'], ['الظَّاهِر', 'العالي فوق خلقه'], ['الْبَاطِن', 'المحيط علمه بكل شيء'], ['الْوَالِي', 'المتولي تدبير الخلق'], ['الْمُتَعَالِي', 'المتنزه عن صفات النقص'], ['الْبَرّ', 'كثير الإحسان'], ['التَّوَّاب', 'يوفق للتوبة ويقبلها'], ['الْمُنْتَقِم', 'يعاقب من يستحق بعدله'],
-    ['الْعَفُوّ', 'يمحو الذنوب ويتجاوز عنها'], ['الرَّؤُوف', 'شديد الرحمة بعباده'], ['مَالِكُ الْمُلْك', 'صاحب الملك كله'], ['ذُو الْجَلَالِ وَالإِكْرَام', 'صاحب العظمة والإحسان'], ['الْمُقْسِط', 'العادل في حكمه'], ['الْجَامِع', 'يجمع الخلائق ليوم الحساب'], ['الْغَنِيّ', 'المستغني عن كل ما سواه'], ['الْمُغْنِي', 'يغني من يشاء من عباده'], ['الْمَانِع', 'يمنع بحكمته'], ['الضَّارّ', 'لا يقع ضر إلا بإذنه وحكمته'],
+    ['الْعَفُوّ', 'يمحو الذنوب ويتجاوز عنها'], ['الرَّؤُوف', 'شديد الرحمة بعباده'], ['مَالِكُ الْمُلْك', 'صاحب الملك كله'], ['ذُو الْجَلَالِ وَالإِكْرَام', 'صاحب العظمة والإحسان'], ['الْمُقْسِط', 'العادل في حكمه'], ['الْجَامِع', 'يجمع الخلائق ليوم الحساب'], ['الْغَنِيّ', 'المستغني عن كل ما سواه'], ['الْمُغْنِي', 'يغني من يشاء من عباده'], ['الْمَانِع', 'يمنع بحكمته'], ['الْمُعْطِي', 'الذي يعطي من يشاء من فضله'], ['الضَّارّ', 'لا يقع ضر إلا بإذنه وحكمته'],
     ['النَّافِع', 'بيده النفع والخير'], ['النُّور', 'منوّر السماوات والأرض'], ['الْهَادِي', 'يهدي من يشاء إلى صراطه'], ['الْبَدِيع', 'موجد الخلق على غير مثال سابق'], ['الْبَاقِي', 'الدائم الذي لا يفنى'], ['الْوَارِث', 'الباقي بعد فناء الخلق'], ['الرَّشِيد', 'الذي أرشد الخلق إلى مصالحهم'], ['الصَّبُور', 'لا يعجل بالعقوبة']
   ];
 
@@ -1007,7 +1013,7 @@ class _AsmaUlHusnaPageState extends State<AsmaUlHusnaPage> {
               ),
             ),
             const SizedBox(height: 12),
-            Text('\${filtered.length} من \${names.length} اسمًا', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+            Text('${filtered.length} من ${names.length} اسمًا', style: const TextStyle(color: Colors.white54, fontSize: 11)),
             const SizedBox(height: 8),
             ...filtered.map((entry) => Container(
               margin: const EdgeInsets.only(bottom: 8),
@@ -1081,7 +1087,7 @@ class _HadithPageState extends State<HadithPage> {
             ),
             const SizedBox(height: 12),
             ...filtered.map((item) => awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('«\${item[0]}»', style: const TextStyle(fontSize: 17, height: 1.8, fontWeight: FontWeight.w600)),
+              Text('«${item[0]}»', style: const TextStyle(fontSize: 17, height: 1.8, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               Text(item[1], style: const TextStyle(color: Colors.white60, fontSize: 11)),
               const SizedBox(height: 8),
