@@ -33,6 +33,32 @@ jobs:
           sed -i 's/-all.zip/-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
           sed -i 's#^distributionUrl=.*#distributionUrl=https\\://mirrors.aliyun.com/gradle/distributions/v9.3.1/gradle-9.3.1-bin.zip#' android/gradle/wrapper/gradle-wrapper.properties
           sed -i '/^distributionUrl=/a distributionSha256Sum=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06' android/gradle/wrapper/gradle-wrapper.properties
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          permissions = [
+              '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+              '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />',
+              '<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />',
+          ]
+          for item in permissions:
+              if item not in s:
+                  s = s.replace('<application', item + '\\n    <application', 1)
+          receivers = '''
+                  <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+                  <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+                      <intent-filter>
+                          <action android:name="android.intent.action.BOOT_COMPLETED" />
+                          <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                          <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                      </intent-filter>
+                  </receiver>
+          '''
+          if 'ScheduledNotificationBootReceiver' not in s:
+              s = s.replace('</application>', receivers + '\\n    </application>')
+          p.write_text(s)
+          PY
       - name: Install dependencies
         run: flutter pub get
       - name: Analyze
