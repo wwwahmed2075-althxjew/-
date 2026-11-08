@@ -3,7 +3,7 @@
     <application
         android:label="آواب"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@drawable/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"
