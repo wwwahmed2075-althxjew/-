@@ -1145,6 +1145,8 @@ class _RemindersPageState extends State<RemindersPage> {
     'قيام الليل': false,
     'صلاة الضحى': false,
   };
+  bool dailyReminderEnabled = false;
+  TimeOfDay reminderTime = const TimeOfDay(hour: 20, minute: 0);
 
   @override
   void initState() {
@@ -1159,6 +1161,11 @@ class _RemindersPageState extends State<RemindersPage> {
       for (final key in values.keys) {
         values[key] = prefs.getBool('reminder_check_$key') ?? false;
       }
+      dailyReminderEnabled = prefs.getBool('daily_reminder_enabled') ?? false;
+      reminderTime = TimeOfDay(
+        hour: prefs.getInt('daily_reminder_hour') ?? 20,
+        minute: prefs.getInt('daily_reminder_minute') ?? 0,
+      );
     });
   }
 
@@ -1166,6 +1173,50 @@ class _RemindersPageState extends State<RemindersPage> {
     setState(() => values[key] = value);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('reminder_check_$key', value);
+  }
+
+  Future<void> _setDailyReminder(bool value) async {
+    if (value) {
+      final granted = await PrayerNotificationService.instance.requestPermissions();
+      if (!granted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('اسمح بالإشعارات من إعدادات الهاتف لتفعيل التذكير.')),
+          );
+        }
+        return;
+      }
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('daily_reminder_enabled', value);
+    if (value) {
+      await PrayerNotificationService.instance.scheduleDailyReminder(
+        hour: reminderTime.hour,
+        minute: reminderTime.minute,
+      );
+    } else {
+      await PrayerNotificationService.instance.cancelDailyReminder();
+    }
+    if (mounted) setState(() => dailyReminderEnabled = value);
+  }
+
+  Future<void> _chooseReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: reminderTime,
+      helpText: 'اختر موعد التذكير اليومي',
+    );
+    if (picked == null) return;
+    setState(() => reminderTime = picked);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('daily_reminder_hour', picked.hour);
+    await prefs.setInt('daily_reminder_minute', picked.minute);
+    if (dailyReminderEnabled) {
+      await PrayerNotificationService.instance.scheduleDailyReminder(
+        hour: picked.hour,
+        minute: picked.minute,
+      );
+    }
   }
 
   @override
@@ -1178,7 +1229,30 @@ class _RemindersPageState extends State<RemindersPage> {
         body: ListView(
           padding: const EdgeInsets.all(18),
           children: [
-            const Text('علّم ما أنجزته؛ تُحفظ المتابعة على جهازك. هذه قائمة متابعة وليست إشعارات تلقائية بعد.', style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.6)),
+            awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: dailyReminderEnabled,
+                activeColor: Colors.white,
+                title: const Text('تذكير يومي بالورد والذكر', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('إشعار يومي في الموعد الذي تختاره', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                onChanged: _setDailyReminder,
+              ),
+              const Divider(color: Colors.white24),
+              Row(children: [
+                const Expanded(child: Text('موعد التذكير', style: TextStyle(fontSize: 13))),
+                TextButton.icon(
+                  onPressed: _chooseReminderTime,
+                  icon: const Icon(Icons.schedule_rounded, size: 17),
+                  label: Text(reminderTime.format(context)),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                ),
+              ]),
+            ])),
+            const SizedBox(height: 14),
+            const Text('متابعة إنجاز العبادات', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 5),
+            const Text('علّم ما أنجزته؛ تُحفظ المتابعة على جهازك. التذكير اليومي أعلاه إشعار فعلي، أما هذه القائمة فهي لتسجيل الإنجاز.', style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.6)),
             const SizedBox(height: 14),
             ...values.keys.map((key) => Container(
               margin: const EdgeInsets.only(bottom: 9),
