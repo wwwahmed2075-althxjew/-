@@ -31,6 +31,7 @@ jobs:
           flutter create --platforms=android --org com.awwab.app --project-name awwab .
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/-all.zip/-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
+          sed -i 's#services.gradle.org/distributions#downloads.gradle.org/distributions#' android/gradle/wrapper/gradle-wrapper.properties
       - name: Install dependencies
         run: flutter pub get
       - name: Analyze
