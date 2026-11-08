@@ -406,26 +406,6 @@ class _HomeShellState extends State<HomeShell> {
     ]);
   }
 
-  Widget _simplePage(String title, String subtitle) {
-    return Center(
-      key: ValueKey(title),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.auto_awesome_outlined, size: 42, color: Colors.white70),
-            const SizedBox(height: 18),
-            Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 10),
-            Text(subtitle, textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white54, height: 1.7)),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _glassCard({required Widget child}) {
     return ClipRRect(borderRadius: BorderRadius.circular(22), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18), child: Container(padding: const EdgeInsets.all(19), decoration: BoxDecoration(color: Colors.white.withOpacity(.065), borderRadius: BorderRadius.circular(22), border: Border.all(color: Colors.white.withOpacity(.16), width: .8)), child: child)));
   }
