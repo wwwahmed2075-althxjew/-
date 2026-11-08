@@ -807,7 +807,7 @@ class AwwabInfoPage extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(section[0], style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               const SizedBox(height: 10),
-              Text(section[1], style: const TextStyle(color: Colors.white80, height: 1.8, fontSize: 15)),
+              Text(section[1], style: const TextStyle(color: Colors.white, height: 1.8, fontSize: 15)),
             ]),
           )).toList(),
         ),
