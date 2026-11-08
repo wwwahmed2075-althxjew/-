@@ -789,21 +789,42 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
               ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Text('حجم العرض', style: TextStyle(color: colors.accent, fontSize: 11)),
-                      Expanded(
-                        child: Slider(
-                          value: fontSize,
-                          min: 22,
-                          max: 38,
-                          divisions: 16,
-                          activeColor: colors.accent,
-                          onChanged: (value) => setState(() => fontSize = value),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(foregroundColor: colors.accent, visualDensity: VisualDensity.compact),
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (dialogContext) => StatefulBuilder(
+                          builder: (dialogContext, updateDialog) => AlertDialog(
+                            backgroundColor: colors.paper,
+                            title: Text('حجم خط المصحف', style: TextStyle(color: colors.accent)),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Slider(
+                                  value: fontSize,
+                                  min: 22,
+                                  max: 38,
+                                  divisions: 16,
+                                  activeColor: colors.accent,
+                                  onChanged: (value) {
+                                    setState(() => fontSize = value);
+                                    updateDialog(() {});
+                                  },
+                                ),
+                                Text(fontSize.round().toString(), style: TextStyle(color: colors.accent)),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text('تم', style: TextStyle(color: colors.accent))),
+                            ],
+                          ),
                         ),
                       ),
-                      Text(fontSize.round().toString(), style: TextStyle(color: colors.accent, fontSize: 11)),
-                    ],
+                      icon: const Icon(Icons.text_fields_rounded, size: 18),
+                      label: const Text('حجم الخط'),
+                    ),
                   ),
                   Row(
                     children: [
