@@ -404,12 +404,7 @@ class _HomeShellState extends State<HomeShell> {
       const SizedBox(height: 16),
       const Text('الإعدادات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
       const SizedBox(height: 10),
-      _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('حجم الخط', style: TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        Text('معاينة النص', style: TextStyle(fontSize: 15 * textScale)),
-        Slider(value: textScale, min: 0.85, max: 1.25, divisions: 8, activeColor: Colors.white, onChanged: (v) async { setState(() => textScale = v); final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', v); }),
-      ])),
+      _moreTile(Icons.text_fields_rounded, 'حجم الخط', 'اضبط حجم القراءة من نافذة جانبية', _showTextScaleDialog),
       const SizedBox(height: 12),
       _glassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('نوع الخط', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -455,6 +450,40 @@ class _HomeShellState extends State<HomeShell> {
         TextButton.icon(onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setDouble('text_scale', 1.0); if (!mounted) return; setState(() => textScale = 1.0); }, icon: const Icon(Icons.restart_alt_rounded), label: const Text('إعادة ضبط حجم الخط')),
       ])),
     ]);
+  }
+
+  Future<void> _showTextScaleDialog() async {
+    double value = textScale;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF191919),
+          title: const Text('حجم الخط'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('معاينة النص', style: TextStyle(fontSize: 16 * value)),
+            Slider(
+              value: value, min: 0.85, max: 1.25, divisions: 8,
+              activeColor: Colors.white,
+              onChanged: (v) {
+                setDialogState(() => value = v);
+                setState(() => textScale = v);
+              },
+            ),
+          ]),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setDouble('text_scale', value);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _moreTile(IconData icon, String title, String subtitle, VoidCallback onTap) {
