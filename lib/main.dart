@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:just_audio/just_audio.dart';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -368,6 +371,9 @@ class _HomeShellState extends State<HomeShell> {
       const SizedBox(height: 8),
       const Text('أدواتك ومحتواك الإسلامي', style: TextStyle(color: Colors.white54)),
       const SizedBox(height: 18),
+      _moreTile(Icons.headphones_rounded, 'المكتبة الصوتية للقرآن', 'اختر القارئ والسورة واستمع عبر الإنترنت', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const QuranAudioLibraryPage()));
+      }),
       _moreTile(Icons.menu_book_rounded, 'الحديث النبوي', 'أحاديث مختارة مع مصادرها', () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const HadithPage()));
       }),
@@ -1096,6 +1102,182 @@ class _HadithPageState extends State<HadithPage> {
             if (filtered.isEmpty) const Padding(padding: EdgeInsets.all(24), child: Text('لا توجد نتائج', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54))),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+class QuranAudioLibraryPage extends StatefulWidget {
+  const QuranAudioLibraryPage({super.key});
+  @override
+  State<QuranAudioLibraryPage> createState() => _QuranAudioLibraryPageState();
+}
+
+class _QuranAudioLibraryPageState extends State<QuranAudioLibraryPage> {
+  final AudioPlayer player = AudioPlayer();
+  List<Map<String, dynamic>> reciters = [];
+  Map<String, dynamic>? selectedReciter;
+  int selectedSurah = 1;
+  bool loading = true;
+  bool starting = false;
+  String? loadError;
+  String? currentTitle;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReciters();
+  }
+
+  Future<void> _loadReciters() async {
+    try {
+      final response = await http.get(Uri.parse('https://www.mp3quran.net/api/v3/reciters?language=ar')).timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200) throw Exception('تعذر الاتصال بمكتبة القراء');
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+      final raw = decoded['reciters'] as List? ?? [];
+      final available = raw
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .where((item) => item['moshaf'] is List && (item['moshaf'] as List).isNotEmpty)
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        reciters = available;
+        selectedReciter = available.isEmpty ? null : available.first;
+        loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+        loadError = 'تعذر تحميل القراء. تحقق من الإنترنت ثم أعد المحاولة.';
+      });
+    }
+  }
+
+  Map<String, dynamic>? get selectedMoshaf {
+    final list = selectedReciter?['moshaf'] as List?;
+    if (list == null || list.isEmpty) return null;
+    return Map<String, dynamic>.from(list.first as Map);
+  }
+
+  bool get selectedSurahAvailable {
+    final list = selectedMoshaf?['surah_list']?.toString();
+    if (list == null || list.isEmpty) return true;
+    return list.split(',').contains(selectedSurah.toString());
+  }
+
+  String? get selectedAudioUrl {
+    final server = selectedMoshaf?['server']?.toString();
+    if (server == null || server.isEmpty || !selectedSurahAvailable) return null;
+    final base = server.endsWith('/') ? server : server + '/';
+    return base + selectedSurah.toString().padLeft(3, '0') + '.mp3';
+  }
+
+  Future<void> _play() async {
+    final url = selectedAudioUrl;
+    if (url == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('السورة غير متاحة لهذا المصحف الصوتي. اختر قارئًا آخر.')));
+      return;
+    }
+    setState(() => starting = true);
+    try {
+      await player.setUrl(url);
+      currentTitle = awwabSurahNames[selectedSurah - 1] + ' — ' + (selectedReciter?['name']?.toString() ?? 'القارئ');
+      await player.play();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر تشغيل التلاوة. جرّب قارئًا أو اتصالًا آخر.')));
+    } finally {
+      if (mounted) setState(() => starting = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('المكتبة الصوتية للقرآن')),
+        body: loading
+            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            : loadError != null
+                ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(loadError!, style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 12),
+                    OutlinedButton(onPressed: () { setState(() { loading = true; loadError = null; }); _loadReciters(); }, child: const Text('إعادة المحاولة')),
+                  ]))
+                : ListView(padding: const EdgeInsets.all(18), children: [
+                    awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text('القارئ', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<int>(
+                        value: int.tryParse(selectedReciter?['id']?.toString() ?? ''),
+                        isExpanded: true,
+                        dropdownColor: const Color(0xFF202020),
+                        decoration: InputDecoration(filled: true, fillColor: Colors.white.withOpacity(.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none)),
+                        items: reciters.map((item) {
+                          final id = int.tryParse(item['id'].toString());
+                          return DropdownMenuItem<int>(value: id, child: Text(item['name']?.toString() ?? 'قارئ'));
+                        }).where((item) => item.value != null).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() => selectedReciter = reciters.firstWhere((item) => int.tryParse(item['id'].toString()) == value));
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      const Text('السورة', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<int>(
+                        value: selectedSurah,
+                        isExpanded: true,
+                        dropdownColor: const Color(0xFF202020),
+                        decoration: InputDecoration(filled: true, fillColor: Colors.white.withOpacity(.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none)),
+                        items: List.generate(awwabSurahNames.length, (index) => DropdownMenuItem<int>(value: index + 1, child: Text(awwabSurahNames[index]))),
+                        onChanged: (value) { if (value != null) setState(() => selectedSurah = value); },
+                      ),
+                      if (!selectedSurahAvailable) const Padding(padding: EdgeInsets.only(top: 8), child: Text('هذه السورة غير متاحة ضمن تسجيلات القارئ المختار.', style: TextStyle(color: Colors.white60, fontSize: 11))),
+                    ])),
+                    const SizedBox(height: 14),
+                    awwabGlassCard(child: Column(children: [
+                      const Icon(Icons.graphic_eq_rounded, size: 34, color: Colors.white70),
+                      const SizedBox(height: 8),
+                      Text(currentTitle ?? 'اختر القارئ والسورة لبدء الاستماع', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 14),
+                      StreamBuilder<PlayerState>(
+                        stream: player.playerStateStream,
+                        builder: (context, snapshot) {
+                          final state = snapshot.data;
+                          final isPlaying = state?.playing ?? false;
+                          final isLoading = starting || state?.processingState == ProcessingState.loading || state?.processingState == ProcessingState.buffering;
+                          return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                            IconButton(onPressed: isLoading ? null : () => player.seek(Duration.zero), icon: const Icon(Icons.replay_rounded), color: Colors.white70),
+                            const SizedBox(width: 12),
+                            isLoading
+                                ? const SizedBox(width: 54, height: 54, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : IconButton.filled(
+                                    onPressed: isPlaying ? player.pause : _play,
+                                    icon: Icon(isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 30),
+                                    style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, fixedSize: const Size(54, 54)),
+                                  ),
+                            const SizedBox(width: 12),
+                            IconButton(onPressed: player.stop, icon: const Icon(Icons.stop_rounded), color: Colors.white70),
+                          ]);
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      const Text('التشغيل عبر الإنترنت؛ لا يتم تنزيل ملفات التلاوة على الجهاز في هذه النسخة.', style: TextStyle(color: Colors.white54, fontSize: 11), textAlign: TextAlign.center),
+                    ])),
+                    const SizedBox(height: 12),
+                    const Text('مصدر بيانات القراء وروابط التلاوات: MP3Quran API.', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                  ]),
       ),
     );
   }
