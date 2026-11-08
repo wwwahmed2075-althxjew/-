@@ -29,6 +29,39 @@ class PrayerNotificationService {
     return notifications ?? false;
   }
 
+  Future<void> scheduleDailyReminder({required int hour, required int minute}) async {
+    await initialize();
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (!scheduled.isAfter(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'awwab_daily_reminders',
+        'التذكيرات اليومية',
+        channelDescription: 'تذكير يومي بالورد والذكر',
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true,
+      ),
+    );
+    await _plugin.zonedSchedule(
+      4100,
+      'موعد وردك اليومي',
+      'حان وقت وردك من القرآن والذكر',
+      scheduled,
+      details,
+      androidScheduleMode: _exactAlarmsAllowed ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  Future<void> cancelDailyReminder() async {
+    await initialize();
+    await _plugin.cancel(4100);
+  }
+
   Future<void> cancelPrayerAlerts() async {
     await initialize();
     for (var id = 3000; id < 3200; id++) {
