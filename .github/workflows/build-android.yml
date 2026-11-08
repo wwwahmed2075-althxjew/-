@@ -30,12 +30,19 @@ jobs:
           rm -rf android
           flutter create --platforms=android --org com.awwab.app --project-name awwab .
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/-all.zip/-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
       - name: Install dependencies
         run: flutter pub get
       - name: Analyze
         run: flutter analyze lib --no-fatal-infos --no-fatal-warnings
       - name: Build APK
-        run: flutter build apk --release --target-platform android-arm64
+        run: |
+          for attempt in 1 2 3; do
+            flutter build apk --release --target-platform android-arm64 && exit 0
+            echo "Gradle download/build attempt $attempt failed; retrying..."
+            sleep 20
+          done
+          exit 1
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
