@@ -368,6 +368,9 @@ class _HomeShellState extends State<HomeShell> {
       const SizedBox(height: 8),
       const Text('أدواتك ومحتواك الإسلامي', style: TextStyle(color: Colors.white54)),
       const SizedBox(height: 18),
+      _moreTile(Icons.menu_book_rounded, 'الحديث النبوي', 'أحاديث مختارة مع مصادرها', () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const HadithPage()));
+      }),
       _moreTile(Icons.auto_awesome_outlined, 'أسماء الله الحسنى', 'الأسماء ومعانيها المختصرة مع البحث', () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmaUlHusnaPage()));
       }),
@@ -1020,6 +1023,71 @@ class _AsmaUlHusnaPageState extends State<AsmaUlHusnaPage> {
                 ])),
               ]),
             )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class HadithPage extends StatefulWidget {
+  const HadithPage({super.key});
+  @override
+  State<HadithPage> createState() => _HadithPageState();
+}
+
+class _HadithPageState extends State<HadithPage> {
+  String query = '';
+  static const items = <List<String>>[
+    ['إنما الأعمال بالنيات', 'صحيح البخاري، حديث 1؛ وصحيح مسلم، حديث 1907', 'الأعمال معتبرة بمقاصدها ونياتها.'],
+    ['من كان يؤمن بالله واليوم الآخر فليقل خيرًا أو ليصمت', 'صحيح البخاري، حديث 6018؛ وصحيح مسلم، حديث 47', 'فيه الحث على حفظ اللسان وقول الخير.'],
+    ['لا يؤمن أحدكم حتى يحب لأخيه ما يحب لنفسه', 'صحيح البخاري، حديث 13؛ وصحيح مسلم، حديث 45', 'يدعو الحديث إلى كمال المحبة والإيثار.'],
+    ['من سلك طريقًا يلتمس فيه علمًا سهّل الله له به طريقًا إلى الجنة', 'صحيح مسلم، حديث 2699', 'فضل طلب العلم الشرعي والسعي إليه.'],
+    ['خيركم من تعلم القرآن وعلمه', 'صحيح البخاري، حديث 5027', 'فضل تعلم القرآن وتعليمه للناس.'],
+    ['الكلمة الطيبة صدقة', 'صحيح البخاري، حديث 2989؛ وصحيح مسلم، حديث 1009', 'الكلام الحسن من أبواب الصدقة.'],
+    ['الطهور شطر الإيمان', 'صحيح مسلم، حديث 223', 'بيان فضل الطهارة ومكانتها.'],
+    ['من لا يَرحم لا يُرحم', 'صحيح البخاري، حديث 5997؛ وصحيح مسلم، حديث 2318', 'الحث على الرحمة بالخلق.'],
+    ['يسروا ولا تعسروا وبشروا ولا تنفروا', 'صحيح البخاري، حديث 69؛ وصحيح مسلم، حديث 1734', 'الدعوة إلى الرفق والتيسير.'],
+    ['إن الله لا ينظر إلى صوركم وأموالكم ولكن ينظر إلى قلوبكم وأعمالكم', 'صحيح مسلم، حديث 2564', 'العبرة بصلاح القلب والعمل لا بالمظاهر.'],
+    ['أحب الأعمال إلى الله أدومها وإن قل', 'صحيح البخاري، حديث 6464؛ وصحيح مسلم، حديث 783', 'المداومة على العمل الصالح ولو كان قليلًا.'],
+    ['من كان في حاجة أخيه كان الله في حاجته', 'صحيح البخاري، حديث 2442؛ وصحيح مسلم، حديث 2580', 'فضل قضاء حوائج الناس وإعانتهم.'],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = items.where((item) => item.any((part) => part.contains(query))).toList();
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080808),
+        appBar: AppBar(backgroundColor: const Color(0xFF080808), foregroundColor: Colors.white, title: const Text('الحديث النبوي')),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const Text('أحاديث مختارة من صحيحي البخاري ومسلم', style: TextStyle(color: Colors.white60, fontSize: 12)),
+            const SizedBox(height: 12),
+            TextField(
+              textDirection: TextDirection.rtl,
+              onChanged: (value) => setState(() => query = value.trim()),
+              decoration: InputDecoration(
+                hintText: 'ابحث في الحديث أو الشرح أو المصدر',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white.withOpacity(.06),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(.12))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(.12))),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...filtered.map((item) => awwabGlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('«\${item[0]}»', style: const TextStyle(fontSize: 17, height: 1.8, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Text(item[1], style: const TextStyle(color: Colors.white60, fontSize: 11)),
+              const SizedBox(height: 8),
+              Text(item[2], style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.6)),
+            ]))),
+            if (filtered.isEmpty) const Padding(padding: EdgeInsets.all(24), child: Text('لا توجد نتائج', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54))),
           ],
         ),
       ),
