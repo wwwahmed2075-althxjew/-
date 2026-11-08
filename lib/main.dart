@@ -99,9 +99,12 @@ class _HomeShellState extends State<HomeShell> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         body: SafeArea(
-          child: MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
-            child: AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: pages[selectedTab]),
+          child: DefaultTextStyle(
+            style: TextStyle(fontFamily: fontFamily),
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+              child: AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: pages[selectedTab]),
+            ),
           ),
         ),
         bottomNavigationBar: SafeArea(
