@@ -93,7 +93,7 @@ jobs:
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/-all.zip/-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
           sed -i 's#^distributionUrl=.*#distributionUrl=https\\://mirrors.aliyun.com/gradle/distributions/v9.3.1/gradle-9.3.1-bin.zip#' android/gradle/wrapper/gradle-wrapper.properties
-          sed -i '/^distributionUrl=/a distributionSha256Sum=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06' android/gradle/wrapper/gradle-wrapper.properties
+          sed -i '/^distributionUrl=/a distributionSha256Sum=553c78f50dafcd54d65b9a444649057857469edf836431389695608536d6b746' android/gradle/wrapper/gradle-wrapper.properties
           python3 - <<'PY'
           from pathlib import Path
           p = Path("android/app/src/main/AndroidManifest.xml")
