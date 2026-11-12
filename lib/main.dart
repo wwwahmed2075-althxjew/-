@@ -839,6 +839,20 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
     super.initState();
     currentPage = widget.initialPage.clamp(1, Quran.pageCount).toInt();
     pageController = PageController(initialPage: currentPage - 1);
+    _loadTajweedPreference();
+  }
+
+  Future<void> _loadTajweedPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => tajweed = prefs.getBool('quran_tajweed_enabled') ?? false);
+  }
+
+  Future<void> _toggleTajweed() async {
+    final nextValue = !tajweed;
+    setState(() => tajweed = nextValue);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('quran_tajweed_enabled', nextValue);
   }
 
   @override
@@ -880,10 +894,21 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
           title: Text('المصحف الشريف • صفحة $currentPage', style: TextStyle(fontSize: 15, color: colors.accent)),
           centerTitle: true,
           actions: [
-            IconButton(
-              tooltip: tajweed ? 'إيقاف التجويد الملون' : 'إظهار أحكام التجويد',
-              onPressed: () => setState(() => tajweed = !tajweed),
-              icon: Icon(Icons.auto_awesome_rounded, color: tajweed ? Colors.white : colors.accent),
+            TextButton.icon(
+              onPressed: _toggleTajweed,
+              icon: Icon(
+                tajweed ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                size: 18,
+                color: colors.accent,
+              ),
+              label: Text(
+                tajweed ? 'إخفاء التجويد' : 'إظهار التجويد',
+                style: TextStyle(color: colors.accent, fontSize: 11),
+              ),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+              ),
             ),
             IconButton(
               tooltip: 'تغيير اتجاه التقليب',
